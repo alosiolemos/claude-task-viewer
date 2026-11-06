@@ -16,7 +16,21 @@ import os from 'os';
 // Configuração e Caminhos
 // ============================================
 
-const PROJECT_NAME = process.env.CLAUDE_CODE_PROJECT || 'default';
+// Derivar nome do projeto: cwd → última pasta
+// argv[2] pode ser cwd passado pelo hook
+// Fallback: CLAUDE_CODE_PROJECT ou 'default'
+function deriveProjectName() {
+  if (process.argv[2] && process.argv[2].length > 0 && !process.argv[2].startsWith('-')) {
+    const cwd = process.argv[2];
+    const parts = cwd.split(path.sep).filter(p => p);
+    if (parts.length > 0) {
+      return parts[parts.length - 1];
+    }
+  }
+  return process.env.CLAUDE_CODE_PROJECT || 'default';
+}
+
+const PROJECT_NAME = deriveProjectName();
 const COLLECTOR_DIR = path.join(os.homedir(), '.painel-execucao', 'data', PROJECT_NAME);
 const EVENTS_FILE = path.join(COLLECTOR_DIR, 'events.jsonl');
 const STATUS_FILE = path.join(COLLECTOR_DIR, 'status.json');
@@ -40,36 +54,52 @@ function ensureDir() {
 
 /**
  * Redige dados sensíveis (caminhos privados, tokens, etc.)
+ * Protegido: nunca retorna dados brutos após profundidade limite
  */
-function redactSensitive(obj, depth = 0) {
-  if (depth > 5) return obj; // Proteção contra loops
+function redactSensitive(obj, depth = 0, maxDepth = 8) {
+  if (depth > maxDepth) {
+    // Proteção contra loop infinito: redactar todo o conteúdo
+    if (typeof obj === 'string' && obj.length > 100) {
+      return '[REDACTED_DEEP_OBJECT]';
+    }
+    return obj;
+  }
+
   if (obj === null || obj === undefined) return obj;
 
   if (typeof obj === 'string') {
     // Remover caminhos completos de usuário (funciona no Windows e Unix)
     const homeDir = os.homedir();
     if (obj.includes(homeDir)) {
-      return obj.replaceAll(homeDir, '~');
+      obj = obj.replaceAll(homeDir, '~');
     }
-    // Remover tokens/chaves (simplista: 40+ chars alfanuméricos)
+
+    // Remover tokens/chaves (40+ chars alfanuméricos)
     if (obj.match(/^[A-Za-z0-9_\-]{40,}$/)) {
       return '[REDACTED_TOKEN]';
     }
+
+    // Remover strings longas suspeitas (prováveis valores codificados)
+    if (obj.length > 200 && obj.match(/[A-Za-z0-9+\/=]{100,}/)) {
+      return '[REDACTED_LONG_VALUE]';
+    }
+
     return obj;
   }
 
   if (Array.isArray(obj)) {
-    return obj.map(item => redactSensitive(item, depth + 1));
+    return obj.slice(0, 100).map(item => redactSensitive(item, depth + 1, maxDepth));
   }
 
   if (typeof obj === 'object') {
     const result = {};
-    for (const [key, value] of Object.entries(obj)) {
-      // Redactar apenas campos verdadeiramente sensíveis (match exato ou sufixo)
-      if (key.match(/^(password|token|secret|api_key|apiKey|access_key|private_key|private|auth|credential)$/i)) {
+    const keys = Object.keys(obj).slice(0, 50); // Limitar chaves
+    for (const key of keys) {
+      // Redactar campos verdadeiramente sensíveis
+      if (key.match(/^(password|token|secret|api_key|apiKey|access_key|private_key|private|auth|credential|bearer|authorization|x-api-key)$/i)) {
         result[key] = '[REDACTED]';
       } else {
-        result[key] = redactSensitive(value, depth + 1);
+        result[key] = redactSensitive(obj[key], depth + 1, maxDepth);
       }
     }
     return result;
