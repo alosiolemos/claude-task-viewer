@@ -1,0 +1,40 @@
+# Dependências
+node_modules/
+package-lock.json
+yarn.lock
+
+# Build e dist
+dist/
+build/
+*.tsbuildinfo
+
+# Ambiente
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+*.jsonl
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Editor
+.DS_Store
+.idea/
+*.swp
+*.swo
+
+# Sistema
+Thumbs.db
+
+# Dados locais (não versionados)
+.painel-execucao/
+data/
+
+# Testes
+.coverage/
+coverage/
