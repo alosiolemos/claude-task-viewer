@@ -174,7 +174,7 @@ async function main() {
       if (stdinData && stdinData.trim()) {
         source = 'stdin';
         try {
-          eventData = JSON.parse(stdinData);
+          eventData = JSON.parse(stdinData.trim());
         } catch {
           // Pode ser formato texto, não JSON
           eventData = { raw: stdinData };
