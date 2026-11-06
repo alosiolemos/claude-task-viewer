@@ -6,9 +6,9 @@
  * Lê os eventos capturados e mostra em formato legível
  */
 
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
 
 const PROJECT_NAME = process.argv[2] || 'default';
 const COLLECTOR_DIR = path.join(os.homedir(), '.painel-execucao', 'data', PROJECT_NAME);

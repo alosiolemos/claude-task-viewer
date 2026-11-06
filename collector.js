@@ -8,9 +8,9 @@
  * mesmo em caso de erro.
  */
 
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
 
 // ============================================
 // Configuração e Caminhos
@@ -46,12 +46,13 @@ function redactSensitive(obj, depth = 0) {
   if (obj === null || obj === undefined) return obj;
 
   if (typeof obj === 'string') {
-    // Remover caminhos completos de usuário
-    if (obj.includes(os.homedir())) {
-      return obj.replace(new RegExp(os.homedir(), 'g'), '~');
+    // Remover caminhos completos de usuário (funciona no Windows e Unix)
+    const homeDir = os.homedir();
+    if (obj.includes(homeDir)) {
+      return obj.replaceAll(homeDir, '~');
     }
-    // Remover tokens/chaves (simplista)
-    if (obj.match(/^[A-Za-z0-9_\-]{40,}/)) {
+    // Remover tokens/chaves (simplista: 40+ chars alfanuméricos)
+    if (obj.match(/^[A-Za-z0-9_\-]{40,}$/)) {
       return '[REDACTED_TOKEN]';
     }
     return obj;
@@ -64,8 +65,8 @@ function redactSensitive(obj, depth = 0) {
   if (typeof obj === 'object') {
     const result = {};
     for (const [key, value] of Object.entries(obj)) {
-      // Pular campos sensíveis
-      if (key.match(/password|token|secret|key|api/i)) {
+      // Redactar apenas campos verdadeiramente sensíveis (match exato ou sufixo)
+      if (key.match(/^(password|token|secret|api_key|apiKey|access_key|private_key|private|auth|credential)$/i)) {
         result[key] = '[REDACTED]';
       } else {
         result[key] = redactSensitive(value, depth + 1);
