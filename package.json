@@ -7,20 +7,30 @@
   "type": "module",
   "main": "collector.js",
   "scripts": {
-    "test": "node test-collector.sh",
+    "test": "bash test-collector.sh",
     "collect:demo": "bash test-collector.sh",
-    "collect:read": "node reader.js painel-execucao"
+    "collect:read": "node reader.js painel-execucao",
+    "ext:dev": "cd extension && npm run watch",
+    "ext:build": "cd extension && npm run build",
+    "web:dev": "cd webview && npm start",
+    "web:build": "cd webview && npm run build"
   },
   "keywords": [
     "claude-code",
     "execution-tracking",
     "audit",
     "workflow",
-    "visualization"
+    "visualization",
+    "vscode",
+    "extension"
   ],
   "engines": {
     "node": ">=18.0.0"
   },
+  "workspaces": [
+    "extension",
+    "webview"
+  ],
   "devDependencies": {},
   "dependencies": {}
 }

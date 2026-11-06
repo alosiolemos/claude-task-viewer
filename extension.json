@@ -1,0 +1,50 @@
+{
+  "name": "painel-execucao",
+  "displayName": "Painel Execução",
+  "description": "Painel local para acompanhar e auditar execução de tarefas do Claude Code",
+  "version": "0.1.0-alpha",
+  "publisher": "aloisiolemos",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alosiolemos/painel-execucao"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "claude-code",
+    "execution",
+    "tracking",
+    "audit",
+    "workflow"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "painel-execucao-container",
+          "title": "Painel Execução",
+          "icon": "resources/painel.svg"
+        }
+      ]
+    },
+    "views": {
+      "painel-execucao-container": [
+        {
+          "type": "webview",
+          "id": "painel-execucao.view",
+          "name": "Execução",
+          "when": "true"
+        }
+      ]
+    }
+  },
+  "main": "./extension/dist/extension.js"
+}

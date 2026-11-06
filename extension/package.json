@@ -1,0 +1,21 @@
+{
+  "name": "painel-execucao-extension",
+  "version": "0.1.0-alpha",
+  "description": "VS Code Extension for painel-execucao",
+  "private": true,
+  "type": "module",
+  "main": "dist/extension.js",
+  "scripts": {
+    "build": "esbuild src/extension.ts --bundle --external:vscode --platform=node --outfile=dist/extension.js",
+    "watch": "npm run build -- --watch",
+    "test": "echo 'no tests yet'"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0"
+  },
+  "dependencies": {}
+}
