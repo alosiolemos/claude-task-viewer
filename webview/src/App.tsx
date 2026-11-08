@@ -39,28 +39,32 @@ function App() {
     let timeoutId: NodeJS.Timeout;
 
     const handleMessage = (event: any) => {
-      const { command, workflow } = event.data;
+      const { command, executions } = event.data;
 
-      if (command === 'workflow-loaded' && workflow?.stages) {
-        // Nova execução: adiciona ao histórico
-        setExecutions((prev) => [workflow, ...prev]);
-        setCurrentId(workflow.id);
+      if (command === 'workflow-loaded' && executions && Array.isArray(executions)) {
+        // Carrega execuções iniciais
+        setExecutions(executions);
+        if (executions.length > 0) {
+          setCurrentId(executions[0].id);
+        }
         setSelectedStage(null);
         setLoading(false);
-      } else if (command === 'workflow-updated' && workflow?.stages) {
-        // Atualizar OR inserir se não existir
+      } else if (command === 'workflow-updated' && executions && Array.isArray(executions)) {
+        // Atualizar ou mesclar execuções
         setExecutions((prev) => {
-          const exists = prev.find((e) => e.id === workflow.id);
-          if (exists) {
-            // Atualiza execução existente
-            return prev.map((e) => (e.id === workflow.id ? workflow : e));
-          } else {
-            // Insere nova execução se não existir
-            return [workflow, ...prev];
-          }
+          const merged = [...prev];
+          executions.forEach((exec) => {
+            const idx = merged.findIndex((e) => e.id === exec.id);
+            if (idx >= 0) {
+              merged[idx] = exec;
+            } else {
+              merged.unshift(exec);
+            }
+          });
+          return merged;
         });
-        if (!currentId) {
-          setCurrentId(workflow.id);
+        if (!currentId && executions.length > 0) {
+          setCurrentId(executions[0].id);
         }
       }
     };
