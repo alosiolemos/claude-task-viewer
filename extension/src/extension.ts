@@ -108,6 +108,35 @@ function inferDemandForEvent(event: any): string | null {
   return null;
 }
 
+function generateSummary(demandTitle: string, events: any[], state?: string): { title: string; summary: string } {
+  const actionCount = events.length;
+  const hasErrors = events.some((e: any) => e.event?.error);
+  const isRunning = state === 'running';
+  const statusSuffix = isRunning ? ' · ⏱️ Executando' : (hasErrors ? ' · ⚠️ Erros' : ' · ✅ Concluída');
+
+  if (demandTitle === 'Auditoria') {
+    const ativos = events.filter((e: any) => e.event?.tool_input?.file_path?.includes('ativos')).length;
+    const excluidos = events.filter((e: any) => e.event?.tool_input?.file_path?.includes('excluido')).length;
+    const title = 'Auditar registros';
+    const summary = ativos > 0 || excluidos > 0
+      ? `${ativos} ativos, ${excluidos} excluídos${statusSuffix}`
+      : `${actionCount} ação(ões)${statusSuffix}`;
+    return { title, summary };
+  }
+
+  if (demandTitle === 'Teste') {
+    return {
+      title: 'Teste',
+      summary: `${actionCount} ação(ões)${statusSuffix}`
+    };
+  }
+
+  return {
+    title: demandTitle,
+    summary: `${actionCount} ação(ões)${statusSuffix}`
+  };
+}
+
 function groupEventsByDemand(events: any[]): { [demand: string]: any[] } {
   const grouped: { [demand: string]: any[] } = {};
 
@@ -187,14 +216,25 @@ function convertEventsToWorkflow(demandTitle: string, events: any[]): any {
   if (!events || events.length === 0) return null;
 
   let firstEventTime: number | null = null;
+  let lastEventTime: number | null = null;
   events.forEach((evt: any) => {
-    if (!firstEventTime && evt.timestamp) {
-      firstEventTime = new Date(evt.timestamp).getTime();
+    if (evt.timestamp) {
+      const time = new Date(evt.timestamp).getTime();
+      if (!firstEventTime) firstEventTime = time;
+      lastEventTime = time;
     }
   });
 
   const stages = groupEventsIntoStages(demandTitle, events);
   const executionId = 'exec-' + demandTitle.toLowerCase().replace(/\s+/g, '-') + '-' + Math.floor((firstEventTime || Date.now()) / 1000);
+
+  // Se último evento é recente (menos de 10 segundos), considerar como "running"
+  const now = Date.now();
+  const isRunning = lastEventTime && (now - lastEventTime) < 10000;
+  const hasErrors = events.some((e: any) => e.event?.error);
+  const state = isRunning ? 'running' : (hasErrors ? 'failed' : 'completed');
+
+  const { title, summary } = generateSummary(demandTitle, events, state);
 
   return {
     id: 'run-real-' + executionId,
@@ -211,6 +251,10 @@ function convertEventsToWorkflow(demandTitle: string, events: any[]): any {
     captureSource: 'real',
     createdAt: new Date(firstEventTime || Date.now()),
     updatedAt: new Date(),
+    title,
+    summary,
+    state,
+    aiSummary: false,
   };
 }
 

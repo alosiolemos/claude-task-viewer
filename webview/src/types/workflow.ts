@@ -5,6 +5,7 @@
 export type StageState = 'planned' | 'running' | 'completed' | 'failed' | 'cancelled' | 'no-evidence';
 export type CaptureSource = 'real' | 'demo';
 export type ActionStatus = 'success' | 'error' | 'pending';
+export type ExecutionState = 'waiting' | 'running' | 'completed' | 'failed';
 
 export interface ToolAction {
   toolUseId: string;
@@ -46,6 +47,11 @@ export interface WorkflowRun {
   captureSource: CaptureSource;
   createdAt: Date;
   updatedAt: Date;
+  // Histórico e UI
+  title?: string; // Título editável, ex: "Auditar 10 registros"
+  summary?: string; // Resumo factual, ex: "8 ativos, 2 excluídos"
+  state?: ExecutionState; // Estado da execução
+  aiSummary?: boolean; // Resumo foi gerado por IA
 }
 
 export interface CanvasNode {

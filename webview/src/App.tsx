@@ -20,14 +20,31 @@ const initializeVscodeApi = () => {
 };
 
 function App() {
-  const [executions, setExecutions] = useState<WorkflowRun[]>([]);
+  const [executions, setExecutions] = useState<WorkflowRun[]>(() => {
+    try {
+      const saved = localStorage.getItem('painel-execucao-history');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [selectedStage, setSelectedStage] = useState<Stage | null>(null);
   const [loading, setLoading] = useState(true);
   const [historyOpen, setHistoryOpen] = useState(true);
+  const [editingTitle, setEditingTitle] = useState<string | null>(null);
   const apiInitialized = useRef(false);
 
   const currentExecution = executions.find((e) => e.id === currentId);
+
+  // Persistir histórico em localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('painel-execucao-history', JSON.stringify(executions));
+    } catch {
+      // localStorage cheio ou indisponível
+    }
+  }, [executions]);
 
   useEffect(() => {
     // Inicializar API apenas uma vez
@@ -108,6 +125,13 @@ function App() {
     );
   }
 
+  const updateExecutionTitle = (execId: string, newTitle: string) => {
+    setExecutions((prev) =>
+      prev.map((e) => (e.id === execId ? { ...e, title: newTitle } : e))
+    );
+    setEditingTitle(null);
+  };
+
   if (!currentExecution) {
     return (
       <div className="App error-screen">
@@ -115,6 +139,11 @@ function App() {
       </div>
     );
   }
+
+  const formatTime = (date: Date) => {
+    const d = new Date(date);
+    return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  };
 
   return (
     <div className="App">
@@ -145,26 +174,62 @@ function App() {
       <main className="App-main">
         {historyOpen && (
           <aside className="history-sidebar">
-            <h3>Execuções</h3>
+            <h3>Histórico</h3>
             <div className="history-list">
               {executions.map((exec) => (
-                <button
+                <div
                   key={exec.id}
                   className={`history-item ${exec.id === currentId ? 'active' : ''}`}
                   onClick={() => {
                     setCurrentId(exec.id);
                     setSelectedStage(null);
                   }}
-                  title={exec.workflow.description}
                 >
-                  <span className="exec-time">
-                    {new Date(exec.createdAt).toLocaleTimeString('pt-BR')}
-                  </span>
-                  <span className="exec-badge">
-                    {exec.captureSource === 'demo' ? '🎬' : '🔴'}
-                  </span>
-                  <span className="exec-count">{exec.stages.length}°</span>
-                </button>
+                  <div className="item-header">
+                    <div className="item-title">
+                      {editingTitle === exec.id ? (
+                        <input
+                          type="text"
+                          value={exec.title || exec.workflow.name}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                          }}
+                          onBlur={(e) => {
+                            e.stopPropagation();
+                            updateExecutionTitle(exec.id, e.target.value);
+                          }}
+                          onKeyDown={(e) => {
+                            e.stopPropagation();
+                            if (e.key === 'Enter') {
+                              updateExecutionTitle(exec.id, e.currentTarget.value);
+                            }
+                          }}
+                          autoFocus
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      ) : (
+                        <span
+                          onDoubleClick={(e) => {
+                            e.stopPropagation();
+                            setEditingTitle(exec.id);
+                          }}
+                          title="Duplo clique para renomear"
+                        >
+                          {exec.title || exec.workflow.name}
+                        </span>
+                      )}
+                    </div>
+                    <span className={`item-state state-${exec.state || 'completed'}`}>
+                      {exec.state === 'completed' ? '✅' : exec.state === 'failed' ? '❌' : '⏱️'}
+                    </span>
+                  </div>
+                  <div className="item-summary">
+                    {exec.summary || `${exec.stages.length} etapas`}
+                  </div>
+                  <div className="item-time">
+                    {formatTime(exec.createdAt)}
+                  </div>
+                </div>
               ))}
             </div>
           </aside>

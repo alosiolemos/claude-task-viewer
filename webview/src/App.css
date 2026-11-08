@@ -116,16 +116,17 @@
 .history-item {
   background: none;
   border: none;
-  padding: 6px 12px;
+  padding: 8px 12px;
   text-align: left;
   font-size: 11px;
   color: var(--vscode-editor-foreground, #d4d4d4);
   cursor: pointer;
   display: flex;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
+  gap: 4px;
   transition: background 0.15s;
   border-left: 2px solid transparent;
+  margin-bottom: 2px;
 }
 
 .history-item:hover {
@@ -135,21 +136,59 @@
 .history-item.active {
   background: var(--vscode-list-activeSelectionBackground, #094771);
   border-left-color: var(--vscode-list-activeSelectionForeground, #fff);
+}
+
+.item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.item-title {
+  font-weight: 600;
+  flex: 1;
+  word-break: break-word;
+}
+
+.item-title input {
+  width: 100%;
+  background: var(--vscode-input-background, #3c3c3c);
+  color: var(--vscode-editor-foreground, #d4d4d4);
+  border: 1px solid var(--vscode-inputOption-activeBorder, #007acc);
+  padding: 2px 4px;
+  border-radius: 2px;
+  font-size: 11px;
   font-weight: 600;
 }
 
-.history-item .exec-time {
-  font-variant-numeric: tabular-nums;
-  opacity: 0.7;
-}
-
-.history-item .exec-badge {
+.item-state {
   font-size: 10px;
+  font-weight: 600;
 }
 
-.history-item .exec-count {
-  margin-left: auto;
-  opacity: 0.6;
+.state-completed {
+  color: #4ec9b0;
+}
+
+.state-failed {
+  color: #ef4444;
+}
+
+.state-running {
+  color: #d7ba7d;
+}
+
+.item-summary {
+  font-size: 10px;
+  opacity: 0.7;
+  line-height: 1.3;
+}
+
+.item-time {
+  font-size: 9px;
+  opacity: 0.5;
+  font-variant-numeric: tabular-nums;
 }
 
 .canvas-wrapper {
