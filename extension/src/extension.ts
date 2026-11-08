@@ -1,11 +1,8 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
-import * as fs from 'fs';
 import { EventReader } from './event-reader';
 
 let panel: vscode.WebviewPanel | undefined;
 const eventReader = new EventReader();
-let currentExecutionId = 'exec-' + Date.now();
 
 export function activate(context: vscode.ExtensionContext) {
   // Registrar comando para abrir painel
@@ -189,15 +186,15 @@ function groupEventsIntoStages(demandTitle: string, events: any[]): any[] {
 function convertEventsToWorkflow(demandTitle: string, events: any[]): any {
   if (!events || events.length === 0) return null;
 
-  const stages = groupEventsIntoStages(demandTitle, events);
-  const executionId = 'exec-' + demandTitle.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now();
   let firstEventTime: number | null = null;
-
   events.forEach((evt: any) => {
     if (!firstEventTime && evt.timestamp) {
       firstEventTime = new Date(evt.timestamp).getTime();
     }
   });
+
+  const stages = groupEventsIntoStages(demandTitle, events);
+  const executionId = 'exec-' + demandTitle.toLowerCase().replace(/\s+/g, '-') + '-' + Math.floor((firstEventTime || Date.now()) / 1000);
 
   return {
     id: 'run-real-' + executionId,
