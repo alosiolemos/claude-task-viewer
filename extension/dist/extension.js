@@ -117,52 +117,49 @@ async function openPanel(context) {
     clearInterval(refreshInterval);
   });
 }
-function convertEventsToWorkflow(events) {
-  if (!events || events.length === 0) {
-    return null;
-  }
+function inferDemandTitle(events) {
+  const files = events.map((e) => e.event?.tool_input?.file_path?.toLowerCase() || "").filter((f) => f);
+  if (files.some((f) => f.includes("auditoria"))) return "Auditoria";
+  if (files.some((f) => f.includes("teste"))) return "Teste";
+  if (files.some((f) => f.includes("processamento"))) return "Processamento";
+  return "Execu\xE7\xE3o em Tempo Real";
+}
+function groupEventsIntoStages(events) {
   const stages = [];
-  const toolGroups = {};
-  let firstEventTime = null;
+  const stageMap = {};
   events.forEach((evt) => {
+    const filePath = evt.event?.tool_input?.file_path?.toLowerCase() || "";
     const toolName = evt.event?.tool_name || "Unknown";
-    if (!toolGroups[toolName]) {
-      toolGroups[toolName] = [];
-    }
-    toolGroups[toolName].push(evt);
-    if (!firstEventTime && evt.timestamp) {
-      firstEventTime = new Date(evt.timestamp).getTime();
-    }
+    let stageKey = toolName;
+    if (filePath.includes("entrada") && toolName === "Write") stageKey = "1-criar-entrada";
+    else if (filePath.includes("entrada") || filePath.includes("ativos") || filePath.includes("excluido")) stageKey = "2-processar";
+    else if (toolName === "Read" && (filePath.includes("ativos") || filePath.includes("excluido"))) stageKey = "3-validar";
+    else if (filePath.includes("relatorio") || filePath.includes("report")) stageKey = "4-gerar-relatorio";
+    if (!stageMap[stageKey]) stageMap[stageKey] = [];
+    stageMap[stageKey].push(evt);
   });
   let stageIdx = 0;
-  Object.entries(toolGroups).forEach(([toolName, toolEvents]) => {
+  Object.entries(stageMap).sort((a, b) => a[0].localeCompare(b[0])).forEach(([key, evts]) => {
     const stageId = "stage-" + stageIdx;
-    const lastEvent = toolEvents[toolEvents.length - 1];
-    const firstEvent = toolEvents[0];
-    const hasError = toolEvents.some((e) => e.event?.error);
-    let stageName = toolName;
-    if (toolName === "Read" && firstEvent?.event?.tool_input?.file_path) {
-      const filePath = firstEvent.event.tool_input.file_path;
-      const fileName = filePath.split(/[\\/]/).pop();
-      stageName = `Ler ${fileName}`;
-    } else if (toolName === "Write" && firstEvent?.event?.tool_input?.file_path) {
-      const filePath = firstEvent.event.tool_input.file_path;
-      const fileName = filePath.split(/[\\/]/).pop();
-      stageName = `Criar ${fileName}`;
-    } else if (toolName === "Edit" && firstEvent?.event?.tool_input?.file_path) {
-      const filePath = firstEvent.event.tool_input.file_path;
-      const fileName = filePath.split(/[\\/]/).pop();
-      stageName = `Editar ${fileName}`;
-    } else if (toolName === "Bash" && firstEvent?.event?.tool_input?.command) {
-      const cmd = firstEvent.event.tool_input.command.split(" ")[0];
-      stageName = `Executar ${cmd}`;
+    const lastEvent = evts[evts.length - 1];
+    const firstEvent = evts[0];
+    const hasError = evts.some((e) => e.event?.error);
+    let stageName = key.split("-").pop() || key;
+    if (key.includes("criar-entrada")) stageName = "Criar Entrada";
+    else if (key.includes("processar")) stageName = "Processar Registros";
+    else if (key.includes("validar")) stageName = "Validar Resultado";
+    else if (key.includes("gerar-relatorio")) stageName = "Gerar Relat\xF3rio";
+    else if (firstEvent?.event?.tool_input?.file_path) {
+      const fileName = firstEvent.event.tool_input.file_path.split(/[\\/]/).pop();
+      const toolName = firstEvent.event?.tool_name;
+      stageName = `${toolName} ${fileName}`;
     }
     stages.push({
       id: stageId,
       name: stageName,
-      description: `${toolEvents.length} chamada(s)`,
+      description: `${evts.length} a\xE7\xE3o(\xF5es)`,
       state: hasError ? "failed" : "completed",
-      actions: toolEvents.map((evt) => ({
+      actions: evts.map((evt) => ({
         toolUseId: evt.event?.tool_use_id,
         toolName: evt.event?.tool_name,
         input: evt.event?.tool_input || {},
@@ -170,23 +167,35 @@ function convertEventsToWorkflow(events) {
         status: evt.event?.error ? "failed" : "success",
         timestamp: new Date(evt.timestamp)
       })),
-      input: toolEvents[0]?.event?.tool_input,
+      input: firstEvent?.event?.tool_input,
       output: lastEvent?.event?.tool_response,
       error: lastEvent?.event?.error || void 0,
-      startedAt: new Date(toolEvents[0]?.timestamp),
+      startedAt: new Date(firstEvent?.timestamp),
       endedAt: new Date(lastEvent?.timestamp)
     });
     stageIdx++;
   });
+  return stages;
+}
+function convertEventsToWorkflow(events) {
+  if (!events || events.length === 0) return null;
+  const stages = groupEventsIntoStages(events);
+  const demandTitle = inferDemandTitle(events);
   const executionId = currentExecutionId;
+  let firstEventTime = null;
+  events.forEach((evt) => {
+    if (!firstEventTime && evt.timestamp) {
+      firstEventTime = new Date(evt.timestamp).getTime();
+    }
+  });
   return {
     id: "run-real-" + executionId,
     projectName: "painel-execucao",
-    demandId: "demand-real",
+    demandId: "demand-" + demandTitle.toLowerCase(),
     executionId,
     workflow: {
       id: "workflow-real",
-      name: "Execu\xE7\xE3o em Tempo Real",
+      name: demandTitle,
       description: `${events.length} evento(s) capturado(s)`,
       stageIds: stages.map((s) => s.id)
     },

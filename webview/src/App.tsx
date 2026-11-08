@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import 'reactflow/dist/style.css';
 import './App.css';
 import { CanvasWorkflow } from './components/CanvasWorkflow';
@@ -6,12 +6,17 @@ import { StageInspector } from './components/StageInspector';
 import { generateDemoWorkflow } from './data/demoWorkflow';
 import { WorkflowRun, Stage } from './types/workflow';
 
-const getVscodeApi = () => {
-  try {
-    return (window as any).acquireVsCodeApi?.();
-  } catch (e) {
-    return undefined;
+// Inicializar API uma única vez
+let vscodeApi: any = null;
+const initializeVscodeApi = () => {
+  if (vscodeApi === null) {
+    try {
+      vscodeApi = (window as any).acquireVsCodeApi?.() || undefined;
+    } catch (e) {
+      vscodeApi = undefined;
+    }
   }
+  return vscodeApi;
 };
 
 function App() {
@@ -20,11 +25,17 @@ function App() {
   const [selectedStage, setSelectedStage] = useState<Stage | null>(null);
   const [loading, setLoading] = useState(true);
   const [historyOpen, setHistoryOpen] = useState(true);
+  const apiInitialized = useRef(false);
 
   const currentExecution = executions.find((e) => e.id === currentId);
 
   useEffect(() => {
-    const vscodeApi = getVscodeApi();
+    // Inicializar API apenas uma vez
+    if (!apiInitialized.current) {
+      initializeVscodeApi();
+      apiInitialized.current = true;
+    }
+
     let timeoutId: NodeJS.Timeout;
 
     const handleMessage = (event: any) => {
@@ -37,10 +48,20 @@ function App() {
         setSelectedStage(null);
         setLoading(false);
       } else if (command === 'workflow-updated' && workflow?.stages) {
-        // Atualiza execução atual (mesma ID, novos stages)
-        setExecutions((prev) =>
-          prev.map((e) => (e.id === workflow.id ? workflow : e))
-        );
+        // Atualizar OR inserir se não existir
+        setExecutions((prev) => {
+          const exists = prev.find((e) => e.id === workflow.id);
+          if (exists) {
+            // Atualiza execução existente
+            return prev.map((e) => (e.id === workflow.id ? workflow : e));
+          } else {
+            // Insere nova execução se não existir
+            return [workflow, ...prev];
+          }
+        });
+        if (!currentId) {
+          setCurrentId(workflow.id);
+        }
       }
     };
 
@@ -55,10 +76,13 @@ function App() {
             setLoading(false);
           }
         }, 2000);
-      } else {
+      } else if (loading && executions.length === 0) {
+        // Sem VSCode API e sem execuções: usar demo
         const demo = generateDemoWorkflow();
         setExecutions([demo]);
         setCurrentId(demo.id);
+        setLoading(false);
+      } else {
         setLoading(false);
       }
     };
@@ -70,7 +94,7 @@ function App() {
       window.removeEventListener('message', handleMessage);
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [loading]);
+  }, []);
 
   if (loading && executions.length === 0) {
     return (
