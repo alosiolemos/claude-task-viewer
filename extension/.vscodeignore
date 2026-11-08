@@ -1,0 +1,7 @@
+**
+!dist/**
+!webview/**
+!resources/**
+!package.json
+!README.md
+!LICENSE

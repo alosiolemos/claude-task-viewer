@@ -62,7 +62,6 @@ export class PainelProvider implements vscode.WebviewViewProvider {
     const htmlPath = vscode.Uri.joinPath(
       this.extensionUri,
       'webview',
-      'dist',
       'index.html'
     );
 
@@ -74,8 +73,8 @@ export class PainelProvider implements vscode.WebviewViewProvider {
         <html>
           <head><title>Painel Execução</title></head>
           <body>
-            <p>Webview HTML not found. Build the extension first.</p>
-            <p>Run: npm run ext:build</p>
+            <p>Webview HTML não encontrado.</p>
+            <p>Execute: npm run ext:build</p>
           </body>
         </html>
       `;
