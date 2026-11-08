@@ -1,35 +1,39 @@
 # 🎉 Release Notes
 
-## [0.2.0] — 2026-11-08 (Canvas Workflow)
+## [0.2.0] — 2026-11-08 (React Flow Canvas)
 
 ### 🎬 Principais Features
 
-- **Canvas Horizontal:** Workflow visual como n8n (Phase 2 Foundation)
+- **Canvas React Flow:** Workflow visual com 10+ etapas demo
 - **WebviewPanel Amplo:** Painel ao lado do chat (não sidebar)
-- **11+ Etapas Demo:** Workflow "Pedido → Validar → Corrigir → Relatório"
-- **Ramificação Visível:** Mostra decisões e retry automático
-- **Inspetor Lateral:** Clique em nó → entrada/saída/erros
-- **Pan/Zoom:** Suporta navegação em canvas grande
-- **Estados Visuais:** ◯ Planejado • ▶ Executando • ✓ Concluído • ✕ Falhou
+- **Inspetor Lateral:** Clique em nó → entrada/saída/erros/dependências
+- **Pan/Zoom Nativo:** React Flow com fitView automático
+- **Estados Coloridos:** ◯ Planejado • ▶ Executando • ✓ Concluído • ✕ Falhou
+- **Arestas Dinâmicas:** Dependências explícitas + conexão anterior por padrão
+- **Auto-Atualiza:** Polling a cada 2s via postMessage
 
 ### 📦 Pacote v0.2.0
 
 ```
-painel-execucao-0.2.0.vsix (7.3 KB)
-├─ extension.js (4.6 KB)   ← WebviewPanel + converter eventos
-├─ webview/index.html      ← Timeline (HTML5 estático)
-├─ icon.svg
-├─ package.json
-└─ LICENSE
+painel-execucao-0.2.0.vsix (110 KB)
+├─ extension.js (5.3 KB)                ← WebviewPanel + converter eventos
+├─ webview/dist/
+│  ├─ index.html (381 B)
+│  ├─ assets/index-*.js (299.6 KB)      ← React Flow compilado
+│  └─ assets/index-*.css (13.5 KB)      ← Estilos
+├─ resources/icon.svg
+└─ package.json
 ```
 
 ### ✅ Validações
 
-- ✅ Extension compilado ESM (4.6 KB)
-- ✅ WebviewPanel abre em aba ampla
+- ✅ React Flow compilado com Vite (299KB JS)
+- ✅ Canvas renderiza 11 etapas demo corretamente
+- ✅ WebviewPanel abre em aba ampla (ao lado do chat)
+- ✅ Inspector abre ao clicar em nó
 - ✅ Auto-refresh a cada 2s
-- ✅ Suporta eventos reais + demo
-- ✅ .vsix pronto para instalar
+- ✅ Suporta eventos reais + fallback demo
+- ✅ .vsix 110 KB instalável
 
 ### 🔄 Evolução
 
