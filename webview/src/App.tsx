@@ -68,11 +68,11 @@ function App() {
         setSelectedStage(null);
         setLoading(false);
       } else if (command === 'workflow-updated' && executions && Array.isArray(executions)) {
-        // Atualizar ou mesclar execuções
+        // Mesclar execuções: atualizar por executionId (não id)
         setExecutions((prev) => {
           const merged = [...prev];
           executions.forEach((exec) => {
-            const idx = merged.findIndex((e) => e.id === exec.id);
+            const idx = merged.findIndex((e) => e.executionId === exec.executionId);
             if (idx >= 0) {
               merged[idx] = exec;
             } else {
