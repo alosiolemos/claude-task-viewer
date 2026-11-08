@@ -1,5 +1,27 @@
 # 🎉 Release Notes
 
+## [0.2.2] — 2026-11-08 (Histórico + Labels)
+
+### ✨ Novo
+
+- **Histórico recolhível:** Sidebar à esquerda com lista de execuções
+- **Múltiplas execuções:** Nova execução com canvas vazio, preserva anteriores
+- **Labels descritivos:** "Ler README.md", "Criar resultado.json", "Validar resultado"
+- **Layout melhorado:** Histórico (esquerda) + Canvas + Inspector (direita)
+
+### 🎬 Como Usar
+
+1. **Instalar:** Extensions → Install from VSIX → `painel-execucao-0.2.1.vsix`
+2. **Abrir:** Cmd+Shift+P → "Abrir Painel Execução"
+3. **Usar:**
+   - Execute ações no Claude Code (Read, Write, etc.)
+   - Painel captura automaticamente
+   - Canvas renderiza com labels descritivos
+   - Clique em nó → Inspector mostra entrada/saída
+   - Histórico lista todas as execuções (timestamp + badge)
+
+---
+
 ## [0.2.1] — 2026-11-08 (Comportamento Corrigido)
 
 ### 🔧 Correções Comportamentais
