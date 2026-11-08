@@ -28,9 +28,17 @@
     "n8n"
   ],
   "activationEvents": [
-    "onStartupFinished"
+    "onStartupFinished",
+    "onCommand:painel-execucao.open"
   ],
   "contributes": {
+    "commands": [
+      {
+        "command": "painel-execucao.open",
+        "title": "Abrir Painel Execução",
+        "category": "Painel Execução"
+      }
+    ],
     "viewsContainers": {
       "activitybar": [
         {
