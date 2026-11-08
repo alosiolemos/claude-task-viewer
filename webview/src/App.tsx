@@ -1,90 +1,99 @@
 import React, { useState, useEffect } from 'react';
+import 'reactflow/dist/style.css';
 import './App.css';
-
-interface ToolEvent {
-  timestamp: string;
-  projectName: string;
-  event: {
-    tool_use_id?: string;
-    tool_name?: string;
-    tool_input?: any;
-    tool_response?: any;
-    captureSource?: string;
-  };
-}
+import { CanvasWorkflow } from './components/CanvasWorkflow';
+import { StageInspector } from './components/StageInspector';
+import { generateDemoWorkflow } from './data/demoWorkflow';
+import { WorkflowRun, Stage } from './types/workflow';
 
 function App() {
-  const [events, setEvents] = useState<ToolEvent[]>([]);
+  const [workflowRun, setWorkflowRun] = useState<WorkflowRun | null>(null);
+  const [selectedStage, setSelectedStage] = useState<Stage | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadEvents = () => {
-      (window as any).vscodeApi?.postMessage({ command: 'load-events' });
-    };
-
-    const handleMessage = (event: any) => {
-      if (event.data.command === 'events-loaded') {
-        setEvents(event.data.events);
+    // Carregar demo workflow ou workflow real
+    const loadWorkflow = async () => {
+      try {
+        // Tentar carregar workflow real do VSCode API
+        const vscodeApi = (window as any).vscodeApi;
+        if (vscodeApi) {
+          vscodeApi.postMessage({ command: 'load-workflow' });
+        } else {
+          // Fallback: demo workflow
+          setWorkflowRun(generateDemoWorkflow());
+          setLoading(false);
+        }
+      } catch (err) {
+        // Em erro, usar demo
+        setWorkflowRun(generateDemoWorkflow());
         setLoading(false);
       }
     };
 
+    const handleMessage = (event: any) => {
+      if (event.data.command === 'workflow-loaded') {
+        setWorkflowRun(event.data.workflow);
+        setLoading(false);
+      } else if (event.data.command === 'workflow-updated') {
+        setWorkflowRun(event.data.workflow);
+      }
+    };
+
     window.addEventListener('message', handleMessage);
-    loadEvents();
+    loadWorkflow();
 
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
+  if (loading) {
+    return (
+      <div className="App loading-screen">
+        <div className="loading-spinner">⏳ Carregando workflow...</div>
+      </div>
+    );
+  }
+
+  if (!workflowRun) {
+    return (
+      <div className="App error-screen">
+        <div className="error-message">❌ Nenhum workflow disponível</div>
+      </div>
+    );
+  }
+
   return (
     <div className="App">
       <header className="App-header">
-        <h1>📊 Painel Execução</h1>
-        <p>Acompanhamento e auditoria de execução do Claude Code</p>
+        <div className="header-content">
+          <div>
+            <h1>📊 {workflowRun.workflow.name}</h1>
+            <p>{workflowRun.workflow.description}</p>
+          </div>
+          <div className="header-meta">
+            <span className={`badge ${workflowRun.captureSource}`}>
+              {workflowRun.captureSource === 'demo' ? '🎬 DEMO' : '🔴 REAL'}
+            </span>
+            <span className="meta-text">
+              {workflowRun.stages.length} etapas • {workflowRun.stages.reduce((a, s) => a + s.actions.length, 0)} ações
+            </span>
+          </div>
+        </div>
       </header>
 
       <main className="App-main">
-        {loading ? (
-          <div className="loading">⏳ Carregando eventos...</div>
-        ) : events.length === 0 ? (
-          <div className="empty">
-            <p>Nenhum evento capturado ainda.</p>
-            <p>Execute uma ação no Claude Code para capturar eventos.</p>
-          </div>
-        ) : (
-          <div className="events-list">
-            <p className="event-count">
-              {events.length} evento{events.length !== 1 ? 's' : ''} capturado{events.length !== 1 ? 's' : ''}
-            </p>
-            {events.map((evt, idx) => (
-              <div key={idx} className="event-card">
-                <div className="event-header">
-                  <span className="event-time">
-                    🕐 {new Date(evt.timestamp).toLocaleTimeString('pt-BR')}
-                  </span>
-                  <span className="event-tool">
-                    🔧 {evt.event.tool_name || 'Desconhecido'}
-                  </span>
-                </div>
-                <div className="event-body">
-                  <div className="event-id">
-                    <strong>ID:</strong> {evt.event.tool_use_id?.substring(0, 20)}...
-                  </div>
-                  {evt.event.tool_input && (
-                    <details>
-                      <summary>📥 Entrada</summary>
-                      <pre>{JSON.stringify(evt.event.tool_input, null, 2).substring(0, 200)}</pre>
-                    </details>
-                  )}
-                  {evt.event.tool_response && (
-                    <details>
-                      <summary>📤 Saída</summary>
-                      <pre>{JSON.stringify(evt.event.tool_response, null, 2).substring(0, 200)}</pre>
-                    </details>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
+        <div className="canvas-wrapper">
+          <CanvasWorkflow
+            stages={workflowRun.stages}
+            onStageSelect={setSelectedStage}
+          />
+        </div>
+
+        {selectedStage && (
+          <StageInspector
+            stage={selectedStage}
+            onClose={() => setSelectedStage(null)}
+          />
         )}
       </main>
     </div>
