@@ -132,11 +132,31 @@ function convertEventsToWorkflow(events: any[]) {
   Object.entries(toolGroups).forEach(([toolName, toolEvents]: [string, any]) => {
     const stageId = 'stage-' + stageIdx;
     const lastEvent = (toolEvents as any[])[toolEvents.length - 1];
+    const firstEvent = (toolEvents as any[])[0];
     const hasError = (toolEvents as any[]).some((e: any) => e.event?.error);
+
+    // Gerar nome descritivo baseado no contexto
+    let stageName = toolName;
+    if (toolName === 'Read' && firstEvent?.event?.tool_input?.file_path) {
+      const filePath = firstEvent.event.tool_input.file_path;
+      const fileName = filePath.split(/[\\/]/).pop();
+      stageName = `Ler ${fileName}`;
+    } else if (toolName === 'Write' && firstEvent?.event?.tool_input?.file_path) {
+      const filePath = firstEvent.event.tool_input.file_path;
+      const fileName = filePath.split(/[\\/]/).pop();
+      stageName = `Criar ${fileName}`;
+    } else if (toolName === 'Edit' && firstEvent?.event?.tool_input?.file_path) {
+      const filePath = firstEvent.event.tool_input.file_path;
+      const fileName = filePath.split(/[\\/]/).pop();
+      stageName = `Editar ${fileName}`;
+    } else if (toolName === 'Bash' && firstEvent?.event?.tool_input?.command) {
+      const cmd = firstEvent.event.tool_input.command.split(' ')[0];
+      stageName = `Executar ${cmd}`;
+    }
 
     stages.push({
       id: stageId,
-      name: toolName,
+      name: stageName,
       description: `${(toolEvents as any[]).length} chamada(s)`,
       state: hasError ? 'failed' : 'completed',
       actions: (toolEvents as any[]).map((evt: any) => ({

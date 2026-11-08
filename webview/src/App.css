@@ -67,11 +67,89 @@
   opacity: 0.6;
 }
 
+.App-header button.history-toggle {
+  background: none;
+  border: none;
+  color: var(--vscode-editor-foreground, #d4d4d4);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.2s;
+  margin-right: 8px;
+}
+
+.App-header button.history-toggle:hover {
+  background: var(--vscode-button-hoverBackground, #3e3e42);
+}
+
 .App-main {
   flex: 1;
   display: flex;
   overflow: hidden;
   position: relative;
+}
+
+.history-sidebar {
+  width: 180px;
+  border-right: 1px solid var(--vscode-panel-border, #3e3e42);
+  background: var(--vscode-sideBar-background, #252526);
+  padding: 12px 0;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.history-sidebar h3 {
+  margin: 0 12px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--vscode-sideBarSectionHeader-foreground, #ccc);
+  letter-spacing: 0.5px;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.history-item {
+  background: none;
+  border: none;
+  padding: 6px 12px;
+  text-align: left;
+  font-size: 11px;
+  color: var(--vscode-editor-foreground, #d4d4d4);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.15s;
+  border-left: 2px solid transparent;
+}
+
+.history-item:hover {
+  background: var(--vscode-list-hoverBackground, #2d2d30);
+}
+
+.history-item.active {
+  background: var(--vscode-list-activeSelectionBackground, #094771);
+  border-left-color: var(--vscode-list-activeSelectionForeground, #fff);
+  font-weight: 600;
+}
+
+.history-item .exec-time {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+.history-item .exec-badge {
+  font-size: 10px;
+}
+
+.history-item .exec-count {
+  margin-left: auto;
+  opacity: 0.6;
 }
 
 .canvas-wrapper {

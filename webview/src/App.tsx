@@ -6,21 +6,22 @@ import { StageInspector } from './components/StageInspector';
 import { generateDemoWorkflow } from './data/demoWorkflow';
 import { WorkflowRun, Stage } from './types/workflow';
 
-// Inicializar VSCode API se disponível
 const getVscodeApi = () => {
   try {
-    const vscodeApi = (window as any).acquireVsCodeApi?.();
-    return vscodeApi;
+    return (window as any).acquireVsCodeApi?.();
   } catch (e) {
     return undefined;
   }
 };
 
 function App() {
-  const [workflowRun, setWorkflowRun] = useState<WorkflowRun | null>(null);
+  const [executions, setExecutions] = useState<WorkflowRun[]>([]);
+  const [currentId, setCurrentId] = useState<string | null>(null);
   const [selectedStage, setSelectedStage] = useState<Stage | null>(null);
   const [loading, setLoading] = useState(true);
-  const [source, setSource] = useState<'demo' | 'real'>('demo');
+  const [historyOpen, setHistoryOpen] = useState(true);
+
+  const currentExecution = executions.find((e) => e.id === currentId);
 
   useEffect(() => {
     const vscodeApi = getVscodeApi();
@@ -29,31 +30,35 @@ function App() {
     const handleMessage = (event: any) => {
       const { command, workflow } = event.data;
 
-      if (command === 'workflow-loaded' && workflow?.stages?.length > 0) {
-        setWorkflowRun(workflow);
-        setSource(workflow.captureSource === 'real' ? 'real' : 'demo');
+      if (command === 'workflow-loaded' && workflow?.stages) {
+        // Nova execução: adiciona ao histórico
+        setExecutions((prev) => [workflow, ...prev]);
+        setCurrentId(workflow.id);
+        setSelectedStage(null);
         setLoading(false);
-      } else if (command === 'workflow-updated' && workflow?.stages?.length > 0) {
-        setWorkflowRun(workflow);
-        setSource(workflow.captureSource === 'real' ? 'real' : 'demo');
+      } else if (command === 'workflow-updated' && workflow?.stages) {
+        // Atualiza execução atual (mesma ID, novos stages)
+        setExecutions((prev) =>
+          prev.map((e) => (e.id === workflow.id ? workflow : e))
+        );
       }
     };
 
     const loadWorkflow = () => {
       if (vscodeApi) {
         vscodeApi.postMessage({ command: 'load-workflow' });
-        // Fallback para demo se não houver resposta em 2s
         timeoutId = setTimeout(() => {
-          if (loading) {
-            setWorkflowRun(generateDemoWorkflow());
-            setSource('demo');
+          if (loading && executions.length === 0) {
+            const demo = generateDemoWorkflow();
+            setExecutions([demo]);
+            setCurrentId(demo.id);
             setLoading(false);
           }
         }, 2000);
       } else {
-        // Sem VSCode API, usar demo imediatamente
-        setWorkflowRun(generateDemoWorkflow());
-        setSource('demo');
+        const demo = generateDemoWorkflow();
+        setExecutions([demo]);
+        setCurrentId(demo.id);
         setLoading(false);
       }
     };
@@ -67,7 +72,7 @@ function App() {
     };
   }, [loading]);
 
-  if (loading) {
+  if (loading && executions.length === 0) {
     return (
       <div className="App loading-screen">
         <div className="loading-spinner">⏳ Carregando workflow...</div>
@@ -75,10 +80,10 @@ function App() {
     );
   }
 
-  if (!workflowRun) {
+  if (!currentExecution) {
     return (
       <div className="App error-screen">
-        <div className="error-message">❌ Nenhum workflow disponível</div>
+        <div className="error-message">❌ Nenhuma execução disponível</div>
       </div>
     );
   }
@@ -87,25 +92,59 @@ function App() {
     <div className="App">
       <header className="App-header">
         <div className="header-content">
+          <button
+            className="history-toggle"
+            onClick={() => setHistoryOpen(!historyOpen)}
+            title={historyOpen ? 'Recolher histórico' : 'Abrir histórico'}
+          >
+            {historyOpen ? '◀' : '▶'} Histórico
+          </button>
           <div>
-            <h1>📊 {workflowRun.workflow.name}</h1>
-            <p>{workflowRun.workflow.description}</p>
+            <h1>📊 {currentExecution.workflow.name}</h1>
+            <p>{currentExecution.workflow.description}</p>
           </div>
           <div className="header-meta">
-            <span className={`badge ${workflowRun.captureSource}`}>
-              {workflowRun.captureSource === 'demo' ? '🎬 DEMO' : '🔴 REAL'}
+            <span className={`badge ${currentExecution.captureSource}`}>
+              {currentExecution.captureSource === 'demo' ? '🎬 DEMO' : '🔴 REAL'}
             </span>
             <span className="meta-text">
-              {workflowRun.stages.length} etapas • {workflowRun.stages.reduce((a, s) => a + s.actions.length, 0)} ações
+              {currentExecution.stages.length} etapas • {currentExecution.stages.reduce((a, s) => a + s.actions.length, 0)} ações
             </span>
           </div>
         </div>
       </header>
 
       <main className="App-main">
+        {historyOpen && (
+          <aside className="history-sidebar">
+            <h3>Execuções</h3>
+            <div className="history-list">
+              {executions.map((exec) => (
+                <button
+                  key={exec.id}
+                  className={`history-item ${exec.id === currentId ? 'active' : ''}`}
+                  onClick={() => {
+                    setCurrentId(exec.id);
+                    setSelectedStage(null);
+                  }}
+                  title={exec.workflow.description}
+                >
+                  <span className="exec-time">
+                    {new Date(exec.createdAt).toLocaleTimeString('pt-BR')}
+                  </span>
+                  <span className="exec-badge">
+                    {exec.captureSource === 'demo' ? '🎬' : '🔴'}
+                  </span>
+                  <span className="exec-count">{exec.stages.length}°</span>
+                </button>
+              ))}
+            </div>
+          </aside>
+        )}
+
         <div className="canvas-wrapper">
           <CanvasWorkflow
-            stages={workflowRun.stages}
+            stages={currentExecution.stages}
             onStageSelect={setSelectedStage}
           />
         </div>
