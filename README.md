@@ -1,8 +1,13 @@
 # Painel Execução
 
+[![GitHub Release](https://img.shields.io/github/v/release/alosiolemos/painel-execucao?label=version)](https://github.com/alosiolemos/painel-execucao/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![VS Code Engine](https://img.shields.io/badge/VS%20Code-%3E%3D1.85.0-blue)](https://code.visualstudio.com/)
+[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18.0.0-green)](https://nodejs.org/)
+
 📊 **Painel local em VS Code** para acompanhar, auditar e inspecionar execução de tarefas do Claude Code em tempo real. Similar ao N8N, mas integrado diretamente no VS Code.
 
-**Status:** ✅ **Foundation Completa** — Painel funcional, Backend validado, Extension buildada
+**Status:** ✅ **Foundation Completa** — Painel funcional, Backend validado, Extension buildada, .vsix pronto para instalar
 
 ---
 
@@ -18,28 +23,57 @@
 
 ## 🚀 Quick Start
 
-### 1️⃣ Instalar
+### 📦 Opção A: Instalar .VSIX (1 minuto)
+
+**Mais rápido para usuários finais**
+
+1. **Abra VS Code**
+2. **Extensions** (Ctrl+Shift+X)
+3. Clique no ícone **"..."** (canto superior direito)
+4. Selecione **"Install from VSIX..."**
+5. Procure por: `painel-execucao-0.1.0-alpha.vsix` ([Download](https://github.com/alosiolemos/painel-execucao/releases))
+6. **Clique no ícone "Painel Execução"** na Activity Bar (esquerda)
+
+✅ Pronto! Veja os eventos demo aparecerem.
+
+---
+
+### 💻 Opção B: Desenvolvimento Local (Com Hot Reload)
+
+**Para desenvolvedores**
 
 ```bash
 git clone https://github.com/alosiolemos/painel-execucao.git
 cd painel-execucao
 npm install
 npm run ext:build
+
+# Abra VS Code na raiz
+code .
+
+# Pressione F5 → selecione "Extension Development Host"
+# Uma nova janela abre com a extensão carregada
 ```
 
-### 2️⃣ Testar Com Demo
-
+**Testar com Demo:**
 ```bash
 npm run collect:demo          # Popula 4 eventos de teste
 npm run collect:read          # Visualiza no CLI
-# ou abra em VS Code: F5 → Extension Development Host
 ```
 
-### 3️⃣ Usar Com Dados Reais
+---
 
-1. Reinicie Claude Code (settings.local.json já tem hooks)
-2. Execute ação no Claude Code: *"Leia o arquivo README.md"*
-3. Novo evento aparece no painel com badge "REAL"
+### 🔵 Capturar Dados Reais
+
+1. **Configure Claude Code** (opcional):
+   - Copie `settings.local.json` para `~/.claude/settings.local.json`
+   - Reinicie Claude Code
+
+2. **Execute uma ação no Claude Code:**
+   - Qualquer ferramenta: Read, Bash, Grep, Edit, etc.
+   - Exemplo: *"Leia o arquivo README.md"*
+
+3. **Novo evento aparece** no painel com badge azul "REAL"
 
 ---
 
@@ -57,10 +91,7 @@ painel-execucao/
 │   │   └── painel-provider.ts ← Webview provider
 │   └── dist/extension.js      ← Build (4.9kb) ✅
 ├── webview/
-│   ├── dist/index.html        ← UI estática (HTML5 puro)
-│   └── src/
-│       ├── App.tsx            ← React component (timeline)
-│       └── index.tsx          ← Entry React
+│   └── dist/index.html        ← UI estática (HTML5 puro + CSS + JS seguro)
 ├── demo-events.jsonl          ← 4 eventos de teste
 ├── USAGE.md                   ← Guia completo
 ├── INVESTIGACAO-ACHADOS.md    ← Validação técnica
@@ -86,14 +117,16 @@ Claude Code Executando
     ↓
     VS Code Extension (TypeScript)
     ├─ Registra webview panel
-    ├─ Lê events.jsonl
-    └─ Envia para frontend
+    ├─ Auto-refresh a cada 2s (lê events.jsonl)
+    ├─ Envia para frontend via postMessage
+    └─ Gerencia visibilidade (pause/resume)
     ↓
-    Webview HTML5 (JavaScript puro)
+    Webview HTML5 (HTML5 + CSS + JavaScript seguro)
     ├─ Timeline interativa
-    ├─ Cards expandíveis
-    ├─ JSON preview entrada/saída
-    └─ Badges Demo/Real
+    ├─ Cards expandíveis (details/summary)
+    ├─ JSON preview entrada/saída (textContent, sem XSS)
+    ├─ Badges Demo/Real com cores VS Code
+    └─ Temas automáticos (claro/escuro)
 ```
 
 ---
@@ -142,24 +175,34 @@ Capturados do Claude Code durante a sessão:
 
 ## 🔒 Segurança
 
-- ✅ **Redação automática:**
+- ✅ **Proteção contra XSS:**
+  - Dados renderizados com `textContent` (não `innerHTML`)
+  - Nenhuma interpretação HTML de eventos
+  - JSON preview é puro texto (escapado)
+
+- ✅ **Redação automática (Collector):**
   - Caminhos: `C:\Users\alois\...` → `~\...`
   - Tokens: `abc123def456...` → `[REDACTED_TOKEN]`
   - Campos sensíveis: `password`, `token`, `secret`, `api_key` → `[REDACTED]`
-
-- ✅ **Proteção contra edge cases:**
   - Profundidade máxima 8 níveis
   - Limites em arrays/objects (100 each)
   - Detecção de strings codificadas longas
 
-- ✅ **Armazenamento local:**
+- ✅ **Armazenamento local apenas:**
   - Nenhuma sincronização
   - Nenhuma telemetria
+  - Nenhuma upload externo
   - Tudo fica em ~/.painel-execucao/
 
 - ✅ **GitHub seguro:**
   - .gitignore strict
   - Nenhum .env ou credenciais no repo
+  - Código opensource para auditoria
+
+- ✅ **Falhas isoladas:**
+  - Erros de I/O não interrompem Claude Code
+  - process.exit(0) mesmo em erro
+  - Sem console.log para stdout
 
 ---
 
@@ -200,12 +243,15 @@ Editar `settings.local.json` para:
 
 ---
 
-## 🔗 Documentação Completa
+## 📚 Documentação
 
-- **[USAGE.md](USAGE.md)** — Guia detalhado de uso
-- **[INVESTIGACAO-ACHADOS.md](INVESTIGACAO-ACHADOS.md)** — Validação técnica (o que funciona, o que não)
-- **[STATUS.md](STATUS.md)** — Roadmap e progresso
-- **[SETUP-GITHUB.md](SETUP-GITHUB.md)** — Como publicar seu fork
+| Documento | Descrição |
+|-----------|-----------|
+| **[INSTALL.md](INSTALL.md)** | ⭐ Começa aqui: 2 opções de instalação (VSIX ou desenvolvimento) |
+| **[USAGE.md](USAGE.md)** | Guia detalhado de uso e configuração |
+| **[GITHUB-SETUP.md](GITHUB-SETUP.md)** | Como publicar seu fork + erro exato se houver bloqueio |
+| **[INVESTIGACAO-ACHADOS.md](INVESTIGACAO-ACHADOS.md)** | Validação técnica (o que funciona, o que não) |
+| **[STATUS.md](STATUS.md)** | Roadmap e progresso da implementação |
 
 ---
 
@@ -333,10 +379,25 @@ MIT — Livre para uso pessoal e comercial
 ## 🔗 Links
 
 - **GitHub:** https://github.com/alosiolemos/painel-execucao
+- **Releases:** https://github.com/alosiolemos/painel-execucao/releases (`.vsix` instalável)
 - **Issues:** https://github.com/alosiolemos/painel-execucao/issues
-- **Releases:** https://github.com/alosiolemos/painel-execucao/releases
+- **License:** [MIT](LICENSE)
+
+---
+
+## 📦 Download
+
+**Instalável:** [painel-execucao-0.1.0-alpha.vsix](https://github.com/alosiolemos/painel-execucao/releases) (7.5 KB)
+
+Ou clone e compile localmente:
+```bash
+git clone https://github.com/alosiolemos/painel-execucao.git
+cd painel-execucao
+npm install && npm run ext:build
+```
 
 ---
 
 **Última atualização:** 2026-11-07  
-**Built with:** Node.js, TypeScript, React, VS Code Extension API
+**Built with:** Node.js 18+, TypeScript, HTML5 (sem frameworks), VS Code Extension API  
+**Autor:** [@alosiolemos](https://github.com/alosiolemos)
