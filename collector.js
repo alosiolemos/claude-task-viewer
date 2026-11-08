@@ -22,7 +22,10 @@ import os from 'os';
 function deriveProjectName() {
   if (process.argv[2] && process.argv[2].length > 0 && !process.argv[2].startsWith('-')) {
     const cwd = process.argv[2];
-    const parts = cwd.split(path.sep).filter(p => p);
+    // Normalizar: bash paths (/c/Users) e Windows paths (C:\Users)
+    const normalized = cwd.replace(/\\/g, '/');
+    // Extrair última pasta
+    const parts = normalized.split('/').filter(p => p && p !== 'c:');
     if (parts.length > 0) {
       return parts[parts.length - 1];
     }
