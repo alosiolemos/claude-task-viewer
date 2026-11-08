@@ -1,0 +1,82 @@
+.canvas-workflow-container {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
+  display: flex;
+  flex-direction: column;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.canvas-workflow-container .react-flow-wrapper {
+  flex: 1;
+  background:
+    radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+    linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
+  background-attachment: fixed;
+}
+
+.canvas-workflow-container .react-flow__nodes {
+  pointer-events: all;
+}
+
+.canvas-workflow-container .react-flow__node {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+.canvas-workflow-container .react-flow__node:hover {
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+  transform: scale(1.05);
+}
+
+.canvas-workflow-container .react-flow__node.selected {
+  box-shadow: 0 0 0 2px #6366f1, 0 8px 24px rgba(99, 102, 241, 0.6);
+}
+
+.canvas-workflow-container .react-flow__edge-path {
+  stroke-width: 2;
+}
+
+.canvas-workflow-container .react-flow__edge.animated path {
+  animation: dash 0.5s linear infinite;
+}
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: -10;
+  }
+}
+
+.canvas-controls {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  background: rgba(31, 41, 55, 0.9);
+  color: #e5e7eb;
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-size: 11px;
+  border: 1px solid #4b5563;
+  z-index: 100;
+  backdrop-filter: blur(4px);
+}
+
+.canvas-state-legend {
+  display: inline-block;
+  line-height: 1.4;
+}
+
+/* Responsivo */
+@media (max-width: 640px) {
+  .canvas-controls {
+    font-size: 10px;
+    padding: 8px 12px;
+    bottom: 10px;
+    left: 10px;
+  }
+
+  .canvas-workflow-container .react-flow__node {
+    min-width: 100px;
+  }
+}
