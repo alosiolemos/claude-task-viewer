@@ -5,6 +5,7 @@ import { EventReader } from './event-reader';
 
 let panel: vscode.WebviewPanel | undefined;
 const eventReader = new EventReader();
+let currentExecutionId = 'exec-' + Date.now();
 
 export function activate(context: vscode.ExtensionContext) {
   // Registrar comando para abrir painel
@@ -68,10 +69,13 @@ async function openPanel(context: vscode.ExtensionContext) {
     switch (message.command) {
       case 'load-workflow':
         const events = await eventReader.readEvents();
-        panel?.webview.postMessage({
-          command: 'workflow-loaded',
-          workflow: convertEventsToWorkflow(events),
-        });
+        const workflow = convertEventsToWorkflow(events);
+        if (workflow) {
+          panel?.webview.postMessage({
+            command: 'workflow-loaded',
+            workflow,
+          });
+        }
         break;
     }
   });
@@ -83,10 +87,13 @@ async function openPanel(context: vscode.ExtensionContext) {
       return;
     }
     const events = await eventReader.readEvents();
-    panel.webview.postMessage({
-      command: 'workflow-updated',
-      workflow: convertEventsToWorkflow(events),
-    });
+    const workflow = convertEventsToWorkflow(events);
+    if (workflow) {
+      panel.webview.postMessage({
+        command: 'workflow-updated',
+        workflow,
+      });
+    }
   }, 2000);
 
   // Limpar ao fechar
@@ -97,13 +104,15 @@ async function openPanel(context: vscode.ExtensionContext) {
 }
 
 function convertEventsToWorkflow(events: any[]) {
+  // Sem eventos, não enviar estrutura fictícia
   if (!events || events.length === 0) {
-    return { stages: [] };
+    return null;
   }
 
-  // Agrupar ações por ferramenta
+  // Agrupar ações por ferramenta (como etapas improvisadas)
   const stages: any[] = [];
   const toolGroups: { [toolName: string]: any[] } = {};
+  let firstEventTime: number | null = null;
 
   events.forEach((evt: any) => {
     const toolName = evt.event?.tool_name || 'Unknown';
@@ -111,50 +120,59 @@ function convertEventsToWorkflow(events: any[]) {
       toolGroups[toolName] = [];
     }
     toolGroups[toolName].push(evt);
+
+    // Rastrear primeiro evento para ID estável
+    if (!firstEventTime && evt.timestamp) {
+      firstEventTime = new Date(evt.timestamp).getTime();
+    }
   });
 
-  // Criar stages agrupados
+  // Criar stages com base em grupos de ferramentas
   let stageIdx = 0;
   Object.entries(toolGroups).forEach(([toolName, toolEvents]: [string, any]) => {
     const stageId = 'stage-' + stageIdx;
     const lastEvent = (toolEvents as any[])[toolEvents.length - 1];
+    const hasError = (toolEvents as any[]).some((e: any) => e.event?.error);
 
     stages.push({
       id: stageId,
       name: toolName,
-      description: `${(toolEvents as any[]).length} execução(ões)`,
-      state: lastEvent?.event?.error ? 'failed' : 'completed',
+      description: `${(toolEvents as any[]).length} chamada(s)`,
+      state: hasError ? 'failed' : 'completed',
       actions: (toolEvents as any[]).map((evt: any) => ({
         toolUseId: evt.event?.tool_use_id,
         toolName: evt.event?.tool_name,
         input: evt.event?.tool_input || {},
-        output: evt.event?.tool_response || evt.event?.error || {},
+        output: evt.event?.tool_response || {},
         status: evt.event?.error ? 'failed' : 'success',
         timestamp: new Date(evt.timestamp),
       })),
       input: (toolEvents as any[])[0]?.event?.tool_input,
       output: lastEvent?.event?.tool_response,
-      error: lastEvent?.event?.error,
+      error: lastEvent?.event?.error || undefined,
       startedAt: new Date((toolEvents as any[])[0]?.timestamp),
       endedAt: new Date(lastEvent?.timestamp),
     });
     stageIdx++;
   });
 
+  // Usar ID de execução estável
+  const executionId = currentExecutionId;
+
   return {
-    id: 'run-real-' + Date.now(),
+    id: 'run-real-' + executionId,
     projectName: 'painel-execucao',
     demandId: 'demand-real',
-    executionId: 'exec-' + Date.now(),
+    executionId,
     workflow: {
       id: 'workflow-real',
       name: 'Execução em Tempo Real',
-      description: 'Eventos capturados do Claude Code',
+      description: `${events.length} evento(s) capturado(s)`,
       stageIds: stages.map((s) => s.id),
     },
     stages,
     captureSource: 'real',
-    createdAt: new Date(),
+    createdAt: new Date(firstEventTime || Date.now()),
     updatedAt: new Date(),
   };
 }

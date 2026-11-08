@@ -44,30 +44,59 @@ export const CanvasWorkflow: React.FC<CanvasWorkflowProps> = ({ stages, onStageS
   const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<any>([]);
 
+  // Carregar posições salvas
+  const loadSavedPositions = () => {
+    try {
+      const saved = localStorage.getItem('canvas-positions');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  };
+
+  // Salvar posições quando mudarem
+  const handleNodesChange = (changes: any) => {
+    try {
+      const positions: Record<string, { x: number; y: number }> = {};
+      nodes.forEach((node) => {
+        positions[node.id] = node.position;
+      });
+      localStorage.setItem('canvas-positions', JSON.stringify(positions));
+    } catch {
+      // localStorage pode não estar disponível
+    }
+    onNodesChange(changes);
+  };
+
   React.useEffect(() => {
+    const savedPositions = loadSavedPositions();
+
     // Gerar nós do workflow
-    const newNodes: Node[] = stages.map((stage, index) => ({
-      id: stage.id,
-      data: {
-        label: stage.name,
-        state: stage.state,
-        icon: stateIcon(stage.state),
-        actionCount: stage.actions.length,
-      },
-      position: { x: index * 220, y: 100 },
-      style: {
-        background: getStateColor(stage.state),
-        color: '#fff',
-        padding: '12px',
-        borderRadius: '6px',
-        border: '2px solid #1f2937',
-        fontSize: '12px',
-        fontWeight: '600',
-        minWidth: '140px',
-        textAlign: 'center',
-        cursor: 'pointer',
-      },
-    }));
+    const newNodes: Node[] = stages.map((stage, index) => {
+      const savedPos = savedPositions[stage.id];
+      return {
+        id: stage.id,
+        data: {
+          label: stage.name,
+          state: stage.state,
+          icon: stateIcon(stage.state),
+          actionCount: stage.actions.length,
+        },
+        position: savedPos || { x: index * 220, y: 100 },
+        style: {
+          background: getStateColor(stage.state),
+          color: '#fff',
+          padding: '12px',
+          borderRadius: '6px',
+          border: '2px solid #1f2937',
+          fontSize: '12px',
+          fontWeight: '600',
+          minWidth: '140px',
+          textAlign: 'center',
+          cursor: 'pointer',
+        },
+      };
+    });
 
     // Gerar arestas (dependências)
     const newEdges: Edge[] = [];
@@ -111,7 +140,7 @@ export const CanvasWorkflow: React.FC<CanvasWorkflowProps> = ({ stages, onStageS
       <ReactFlow
         nodes={nodes}
         edges={edges}
-        onNodesChange={onNodesChange}
+        onNodesChange={handleNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeClick={handleNodeClick}
         fitView

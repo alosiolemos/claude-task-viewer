@@ -42,6 +42,7 @@ var EventReader = class {
 // src/extension.ts
 var panel;
 var eventReader = new EventReader();
+var currentExecutionId = "exec-" + Date.now();
 function activate(context) {
   const command = vscode.commands.registerCommand("painel-execucao.open", () => {
     openPanel(context);
@@ -87,10 +88,13 @@ async function openPanel(context) {
     switch (message.command) {
       case "load-workflow":
         const events = await eventReader.readEvents();
-        panel?.webview.postMessage({
-          command: "workflow-loaded",
-          workflow: convertEventsToWorkflow(events)
-        });
+        const workflow = convertEventsToWorkflow(events);
+        if (workflow) {
+          panel?.webview.postMessage({
+            command: "workflow-loaded",
+            workflow
+          });
+        }
         break;
     }
   });
@@ -100,10 +104,13 @@ async function openPanel(context) {
       return;
     }
     const events = await eventReader.readEvents();
-    panel.webview.postMessage({
-      command: "workflow-updated",
-      workflow: convertEventsToWorkflow(events)
-    });
+    const workflow = convertEventsToWorkflow(events);
+    if (workflow) {
+      panel.webview.postMessage({
+        command: "workflow-updated",
+        workflow
+      });
+    }
   }, 2e3);
   panel.onDidDispose(() => {
     panel = void 0;
@@ -112,56 +119,62 @@ async function openPanel(context) {
 }
 function convertEventsToWorkflow(events) {
   if (!events || events.length === 0) {
-    return { stages: [] };
+    return null;
   }
   const stages = [];
   const toolGroups = {};
+  let firstEventTime = null;
   events.forEach((evt) => {
     const toolName = evt.event?.tool_name || "Unknown";
     if (!toolGroups[toolName]) {
       toolGroups[toolName] = [];
     }
     toolGroups[toolName].push(evt);
+    if (!firstEventTime && evt.timestamp) {
+      firstEventTime = new Date(evt.timestamp).getTime();
+    }
   });
   let stageIdx = 0;
   Object.entries(toolGroups).forEach(([toolName, toolEvents]) => {
     const stageId = "stage-" + stageIdx;
     const lastEvent = toolEvents[toolEvents.length - 1];
+    const hasError = toolEvents.some((e) => e.event?.error);
     stages.push({
       id: stageId,
       name: toolName,
-      description: `${toolEvents.length} execu\xE7\xE3o(\xF5es)`,
-      state: lastEvent?.event?.error ? "failed" : "completed",
+      description: `${toolEvents.length} chamada(s)`,
+      state: hasError ? "failed" : "completed",
       actions: toolEvents.map((evt) => ({
         toolUseId: evt.event?.tool_use_id,
         toolName: evt.event?.tool_name,
         input: evt.event?.tool_input || {},
-        output: evt.event?.tool_response || evt.event?.error || {},
+        output: evt.event?.tool_response || {},
         status: evt.event?.error ? "failed" : "success",
         timestamp: new Date(evt.timestamp)
       })),
       input: toolEvents[0]?.event?.tool_input,
       output: lastEvent?.event?.tool_response,
-      error: lastEvent?.event?.error,
+      error: lastEvent?.event?.error || void 0,
       startedAt: new Date(toolEvents[0]?.timestamp),
       endedAt: new Date(lastEvent?.timestamp)
     });
     stageIdx++;
   });
+  const executionId = currentExecutionId;
   return {
-    id: "run-real-" + Date.now(),
+    id: "run-real-" + executionId,
     projectName: "painel-execucao",
     demandId: "demand-real",
-    executionId: "exec-" + Date.now(),
+    executionId,
     workflow: {
       id: "workflow-real",
       name: "Execu\xE7\xE3o em Tempo Real",
-      description: "Eventos capturados do Claude Code",
+      description: `${events.length} evento(s) capturado(s)`,
       stageIds: stages.map((s) => s.id)
     },
     stages,
     captureSource: "real",
-    createdAt: /* @__PURE__ */ new Date(),
+    createdAt: new Date(firstEventTime || Date.now()),
     updatedAt: /* @__PURE__ */ new Date()
   };
 }

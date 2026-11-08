@@ -6,45 +6,66 @@ import { StageInspector } from './components/StageInspector';
 import { generateDemoWorkflow } from './data/demoWorkflow';
 import { WorkflowRun, Stage } from './types/workflow';
 
+// Inicializar VSCode API se disponível
+const getVscodeApi = () => {
+  try {
+    const vscodeApi = (window as any).acquireVsCodeApi?.();
+    return vscodeApi;
+  } catch (e) {
+    return undefined;
+  }
+};
+
 function App() {
   const [workflowRun, setWorkflowRun] = useState<WorkflowRun | null>(null);
   const [selectedStage, setSelectedStage] = useState<Stage | null>(null);
   const [loading, setLoading] = useState(true);
+  const [source, setSource] = useState<'demo' | 'real'>('demo');
 
   useEffect(() => {
-    // Carregar demo workflow ou workflow real
-    const loadWorkflow = async () => {
-      try {
-        // Tentar carregar workflow real do VSCode API
-        const vscodeApi = (window as any).vscodeApi;
-        if (vscodeApi) {
-          vscodeApi.postMessage({ command: 'load-workflow' });
-        } else {
-          // Fallback: demo workflow
-          setWorkflowRun(generateDemoWorkflow());
-          setLoading(false);
-        }
-      } catch (err) {
-        // Em erro, usar demo
-        setWorkflowRun(generateDemoWorkflow());
+    const vscodeApi = getVscodeApi();
+    let timeoutId: NodeJS.Timeout;
+
+    const handleMessage = (event: any) => {
+      const { command, workflow } = event.data;
+
+      if (command === 'workflow-loaded' && workflow?.stages?.length > 0) {
+        setWorkflowRun(workflow);
+        setSource(workflow.captureSource === 'real' ? 'real' : 'demo');
         setLoading(false);
+      } else if (command === 'workflow-updated' && workflow?.stages?.length > 0) {
+        setWorkflowRun(workflow);
+        setSource(workflow.captureSource === 'real' ? 'real' : 'demo');
       }
     };
 
-    const handleMessage = (event: any) => {
-      if (event.data.command === 'workflow-loaded') {
-        setWorkflowRun(event.data.workflow);
+    const loadWorkflow = () => {
+      if (vscodeApi) {
+        vscodeApi.postMessage({ command: 'load-workflow' });
+        // Fallback para demo se não houver resposta em 2s
+        timeoutId = setTimeout(() => {
+          if (loading) {
+            setWorkflowRun(generateDemoWorkflow());
+            setSource('demo');
+            setLoading(false);
+          }
+        }, 2000);
+      } else {
+        // Sem VSCode API, usar demo imediatamente
+        setWorkflowRun(generateDemoWorkflow());
+        setSource('demo');
         setLoading(false);
-      } else if (event.data.command === 'workflow-updated') {
-        setWorkflowRun(event.data.workflow);
       }
     };
 
     window.addEventListener('message', handleMessage);
     loadWorkflow();
 
-    return () => window.removeEventListener('message', handleMessage);
-  }, []);
+    return () => {
+      window.removeEventListener('message', handleMessage);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [loading]);
 
   if (loading) {
     return (
