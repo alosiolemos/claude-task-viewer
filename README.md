@@ -7,7 +7,7 @@
 
 📊 **Painel local em VS Code** para acompanhar, auditar e inspecionar execução de tarefas do Claude Code em tempo real. Similar ao N8N, mas integrado diretamente no VS Code.
 
-**Status:** ✅ **Foundation Completa** — Painel funcional, Backend validado, Extension buildada, .vsix pronto para instalar
+**Status:** ✅ **Foundation Completa** — Painel funcional, Backend validado, Extension ES Modules corrigida, .vsix 0.1.1 pronto para instalar
 
 ---
 
@@ -31,7 +31,7 @@
 2. **Extensions** (Ctrl+Shift+X)
 3. Clique no ícone **"..."** (canto superior direito)
 4. Selecione **"Install from VSIX..."**
-5. Procure por: `painel-execucao-0.1.0-alpha.vsix` ([Download](https://github.com/alosiolemos/painel-execucao/releases))
+5. Procure por: `painel-execucao-0.1.1.vsix` ([Download](https://github.com/alosiolemos/painel-execucao/releases))
 6. **Clique no ícone "Painel Execução"** na Activity Bar (esquerda)
 
 ✅ Pronto! Veja os eventos demo aparecerem.
@@ -387,7 +387,7 @@ MIT — Livre para uso pessoal e comercial
 
 ## 📦 Download
 
-**Instalável:** [painel-execucao-0.1.0-alpha.vsix](https://github.com/alosiolemos/painel-execucao/releases) (7.5 KB)
+**Instalável:** [painel-execucao-0.1.1.vsix](https://github.com/alosiolemos/painel-execucao/releases) (6.9 KB)
 
 Ou clone e compile localmente:
 ```bash
