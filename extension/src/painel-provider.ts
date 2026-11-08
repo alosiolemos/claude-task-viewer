@@ -4,6 +4,7 @@ import { EventReader } from './event-reader';
 export class PainelProvider implements vscode.WebviewViewProvider {
   private view?: vscode.WebviewView;
   private eventReader: EventReader;
+  private refreshInterval?: NodeJS.Timeout;
 
   constructor(private extensionUri: vscode.Uri) {
     this.eventReader = new EventReader();
@@ -21,6 +22,39 @@ export class PainelProvider implements vscode.WebviewViewProvider {
 
     webviewView.webview.onDidReceiveMessage((message) => {
       this.handleMessage(message);
+    });
+
+    webviewView.onDidChangeVisibility(() => {
+      if (webviewView.visible) {
+        this.startAutoRefresh();
+      } else {
+        this.stopAutoRefresh();
+      }
+    });
+
+    this.startAutoRefresh();
+  }
+
+  private startAutoRefresh() {
+    if (this.refreshInterval) return;
+    this.refreshInterval = setInterval(() => {
+      this.refreshEvents();
+    }, 2000);
+    this.refreshEvents();
+  }
+
+  private stopAutoRefresh() {
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+      this.refreshInterval = undefined;
+    }
+  }
+
+  private async refreshEvents() {
+    const events = await this.eventReader.readEvents();
+    this.view?.webview.postMessage({
+      command: 'events-updated',
+      events,
     });
   }
 

@@ -1,21 +1,85 @@
 {
-  "name": "painel-execucao-extension",
+  "name": "painel-execucao",
+  "displayName": "Painel Execução",
+  "description": "Acompanhe e audite execução de tarefas do Claude Code em tempo real",
   "version": "0.1.0-alpha",
-  "description": "VS Code Extension for painel-execucao",
-  "private": true,
+  "publisher": "aloisiolemos",
+  "author": "Aloisio Lemos",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alosiolemos/painel-execucao"
+  },
   "type": "module",
   "main": "dist/extension.js",
+  "engines": {
+    "vscode": "^1.85.0",
+    "node": ">=18.0.0"
+  },
+  "categories": [
+    "Monitoring"
+  ],
+  "keywords": [
+    "claude-code",
+    "execution",
+    "tracking",
+    "audit",
+    "workflow",
+    "n8n"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "painel-execucao-container",
+          "title": "Painel Execução",
+          "icon": "$(graph)"
+        }
+      ]
+    },
+    "views": {
+      "painel-execucao-container": [
+        {
+          "type": "webview",
+          "id": "painel-execucao.view",
+          "name": "Execução",
+          "when": "true"
+        }
+      ]
+    },
+    "configuration": [
+      {
+        "title": "Painel Execução",
+        "properties": {
+          "painel-execucao.autoRefresh": {
+            "type": "boolean",
+            "default": true,
+            "description": "Atualizar painel automaticamente a cada novo evento"
+          },
+          "painel-execucao.refreshInterval": {
+            "type": "number",
+            "default": 2000,
+            "description": "Intervalo de atualização em milissegundos"
+          }
+        }
+      }
+    ]
+  },
   "scripts": {
+    "vscode:prepublish": "npm run build",
     "build": "esbuild src/extension.ts --bundle --external:vscode --platform=node --outfile=dist/extension.js",
     "watch": "npm run build -- --watch",
-    "test": "echo 'no tests yet'"
-  },
-  "engines": {
-    "vscode": "^1.85.0"
+    "compile": "npm run build",
+    "package": "vsce package",
+    "publish": "vsce publish"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^2.32.0",
     "esbuild": "^0.28.2"
   }
 }
