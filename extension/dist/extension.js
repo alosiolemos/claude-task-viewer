@@ -71,14 +71,16 @@ async function openPanel(context) {
   try {
     let html = await vscode.workspace.fs.readFile(htmlPath);
     let htmlString = new TextDecoder().decode(html);
-    const baseUri = vscode.Uri.joinPath(context.extensionUri, "webview", "dist");
-    htmlString = htmlString.replace(/href="\//g, `href="${baseUri.with({ scheme: "vscode-resource" })}/`);
-    htmlString = htmlString.replace(/src="\//g, `src="${baseUri.with({ scheme: "vscode-resource" })}/`);
+    const distUri = panel.webview.asWebviewUri(
+      vscode.Uri.joinPath(context.extensionUri, "webview", "dist")
+    );
+    htmlString = htmlString.replace(/href="\/assets\//g, `href="${distUri.toString()}/assets/`);
+    htmlString = htmlString.replace(/src="\/assets\//g, `src="${distUri.toString()}/assets/`);
     panel.webview.html = htmlString;
   } catch (e) {
     panel.webview.html = `<html><body>
       <p>\u274C Erro ao carregar Painel Execu\xE7\xE3o</p>
-      <p>Execute: npm run web:build</p>
+      <p>Execute: cd webview && npm run build</p>
     </body></html>`;
   }
   panel.webview.onDidReceiveMessage(async (message) => {
@@ -109,6 +111,43 @@ async function openPanel(context) {
   });
 }
 function convertEventsToWorkflow(events) {
+  if (!events || events.length === 0) {
+    return { stages: [] };
+  }
+  const stages = [];
+  const toolGroups = {};
+  events.forEach((evt) => {
+    const toolName = evt.event?.tool_name || "Unknown";
+    if (!toolGroups[toolName]) {
+      toolGroups[toolName] = [];
+    }
+    toolGroups[toolName].push(evt);
+  });
+  let stageIdx = 0;
+  Object.entries(toolGroups).forEach(([toolName, toolEvents]) => {
+    const stageId = "stage-" + stageIdx;
+    const lastEvent = toolEvents[toolEvents.length - 1];
+    stages.push({
+      id: stageId,
+      name: toolName,
+      description: `${toolEvents.length} execu\xE7\xE3o(\xF5es)`,
+      state: lastEvent?.event?.error ? "failed" : "completed",
+      actions: toolEvents.map((evt) => ({
+        toolUseId: evt.event?.tool_use_id,
+        toolName: evt.event?.tool_name,
+        input: evt.event?.tool_input || {},
+        output: evt.event?.tool_response || evt.event?.error || {},
+        status: evt.event?.error ? "failed" : "success",
+        timestamp: new Date(evt.timestamp)
+      })),
+      input: toolEvents[0]?.event?.tool_input,
+      output: lastEvent?.event?.tool_response,
+      error: lastEvent?.event?.error,
+      startedAt: new Date(toolEvents[0]?.timestamp),
+      endedAt: new Date(lastEvent?.timestamp)
+    });
+    stageIdx++;
+  });
   return {
     id: "run-real-" + Date.now(),
     projectName: "painel-execucao",
@@ -118,27 +157,9 @@ function convertEventsToWorkflow(events) {
       id: "workflow-real",
       name: "Execu\xE7\xE3o em Tempo Real",
       description: "Eventos capturados do Claude Code",
-      stageIds: events.map((_, i) => "stage-" + i)
+      stageIds: stages.map((s) => s.id)
     },
-    stages: events.map((evt, idx) => ({
-      id: "stage-" + idx,
-      name: evt.event.tool_name || "Ferramenta",
-      description: evt.event.tool_use_id?.substring(0, 20),
-      state: "completed",
-      actions: [
-        {
-          toolUseId: evt.event.tool_use_id,
-          toolName: evt.event.tool_name,
-          input: evt.event.tool_input || {},
-          output: evt.event.tool_response || {},
-          status: "success",
-          timestamp: new Date(evt.timestamp)
-        }
-      ],
-      startedAt: new Date(evt.timestamp),
-      endedAt: new Date(evt.timestamp),
-      output: evt.event.tool_response
-    })),
+    stages,
     captureSource: "real",
     createdAt: /* @__PURE__ */ new Date(),
     updatedAt: /* @__PURE__ */ new Date()

@@ -71,7 +71,7 @@ export const CanvasWorkflow: React.FC<CanvasWorkflowProps> = ({ stages, onStageS
 
     // Gerar arestas (dependências)
     const newEdges: Edge[] = [];
-    stages.forEach((stage) => {
+    stages.forEach((stage, idx) => {
       if (stage.dependsOn && stage.dependsOn.length > 0) {
         stage.dependsOn.forEach((depId) => {
           newEdges.push({
@@ -82,9 +82,9 @@ export const CanvasWorkflow: React.FC<CanvasWorkflowProps> = ({ stages, onStageS
             style: { stroke: '#6366f1', strokeWidth: 2 },
           });
         });
-      } else if (index > 0) {
+      } else if (idx > 0) {
         // Default: conectar ao anterior se sem dependência explícita
-        const prevStage = stages[index - 1];
+        const prevStage = stages[idx - 1];
         newEdges.push({
           id: `${prevStage.id}-${stage.id}`,
           source: prevStage.id,
