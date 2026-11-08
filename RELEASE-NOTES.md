@@ -1,5 +1,24 @@
 # 🎉 Release Notes
 
+## [0.2.1] — 2026-11-08 (Comportamento Corrigido)
+
+### 🔧 Correções Comportamentais
+
+- **Preserve Posições:** Nós mantêm posição entre updates (localStorage)
+- **Estabilize Execução:** executionId idêntico por sessão (não recria a cada refresh)
+- **VSCode API:** acquireVsCodeApi() inicializado corretamente
+- **Sem Dados Fictícios:** Não cria dependências automáticas nem marca sucesso genérico
+- **Fallback Demo:** Mostra demo claramente identificada quando sem eventos reais
+- **Agrupa Corretamente:** Ações por ferramenta (Read, Bash, etc), não por evento
+
+### 📦 Pacote v0.2.1
+
+```
+painel-execucao-0.2.1.vsix (110 KB)
+```
+
+---
+
 ## [0.2.0] — 2026-11-08 (React Flow Canvas)
 
 ### 🎬 Principais Features
