@@ -2,7 +2,7 @@
   "name": "painel-execucao",
   "displayName": "Painel Execução",
   "description": "Acompanhe e audite execução de tarefas do Claude Code em tempo real",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "publisher": "aloisiolemos",
   "author": "Aloisio Lemos",
   "license": "MIT",
