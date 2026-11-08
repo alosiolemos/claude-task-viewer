@@ -1,103 +1,87 @@
-# 🎉 Release Notes — v0.1.0-alpha
+# 🎉 Release Notes
 
-## O Que Há Nesta Release
+## [0.2.0] — 2026-11-08 (Canvas Workflow)
 
-### ✅ Funcionalidades Completas
+### 🎬 Principais Features
 
-- **Painel em Tempo Real:** Timeline de eventos do Claude Code em VS Code
-- **.vsix Instalável:** 7.5 KB, pronto para instalar sem compilação
-- **HTML5 Puro:** Sem React, sem dependências pesadas, sem webpack
-- **Proteção XSS:** Renderização segura com `textContent` (não `innerHTML`)
-- **Auto-Refresh:** Timeline atualiza a cada 2 segundos
-- **Redação Automática:** Paths, tokens e campos sensíveis removidos
-- **Demo vs Real:** Badges visuais (amarelo = teste, azul = capturado)
-- **TypeScript:** Extension compilada com esbuild (5.4 KB)
+- **Canvas Horizontal:** Workflow visual como n8n (Phase 2 Foundation)
+- **WebviewPanel Amplo:** Painel ao lado do chat (não sidebar)
+- **11+ Etapas Demo:** Workflow "Pedido → Validar → Corrigir → Relatório"
+- **Ramificação Visível:** Mostra decisões e retry automático
+- **Inspetor Lateral:** Clique em nó → entrada/saída/erros
+- **Pan/Zoom:** Suporta navegação em canvas grande
+- **Estados Visuais:** ◯ Planejado • ▶ Executando • ✓ Concluído • ✕ Falhou
 
-### 📦 Pacote Inclui
+### 📦 Pacote v0.2.0
 
 ```
-painel-execucao-0.1.0-alpha.vsix
-├─ extension.js (5.4 KB)       ← Backend VS Code
-├─ webview/index.html (6.9 KB) ← Frontend HTML5
-├─ icon.svg                    ← Ícone Activity Bar
-├─ package.json                ← Manifesto VS Code
-└─ LICENSE                     ← MIT License
+painel-execucao-0.2.0.vsix (7.3 KB)
+├─ extension.js (4.6 KB)   ← WebviewPanel + converter eventos
+├─ webview/index.html      ← Timeline (HTML5 estático)
+├─ icon.svg
+├─ package.json
+└─ LICENSE
 ```
 
-### 🚀 Como Instalar
+### ✅ Validações
 
-1. **Baixe:** `painel-execucao-0.1.0-alpha.vsix`
-2. **Abra VS Code**
-3. **Ctrl+Shift+X** → "..." → "Install from VSIX..."
-4. **Selecione** o arquivo `.vsix`
-5. **Clique** no ícone "Painel Execução" na Activity Bar
+- ✅ Extension compilado ESM (4.6 KB)
+- ✅ WebviewPanel abre em aba ampla
+- ✅ Auto-refresh a cada 2s
+- ✅ Suporta eventos reais + demo
+- ✅ .vsix pronto para instalar
 
-✅ Pronto! Timeline demo aparece automaticamente.
+### 🔄 Evolução
 
-### 📋 Testar
-
-```bash
-# Clonar repositório
-git clone https://github.com/alosiolemos/painel-execucao.git
-cd painel-execucao
-
-# Instalação local (com hot reload)
-npm install
-npm run ext:build
-F5 → Extension Development Host
-
-# Ver eventos demo
-npm run collect:demo
-npm run collect:read
-
-# Capturar dados reais
-# → Configure settings.local.json (vem pronto)
-# → Reinicie Claude Code
-# → Execute ação (Read, Bash, Grep, etc.)
-# → Novo evento aparece com badge "REAL"
-```
-
-### 🔒 Segurança
-
-- ✅ XSS protection (textContent rendering)
-- ✅ Automatic redaction (paths, tokens, secrets)
-- ✅ Local storage only (no cloud sync)
-- ✅ No telemetry
-- ✅ Open source for audit
-
-### 📚 Documentação
-
-- **[INSTALL.md](https://github.com/alosiolemos/painel-execucao/blob/main/INSTALL.md)** — Guia instalação
-- **[README.md](https://github.com/alosiolemos/painel-execucao/blob/main/README.md)** — Visão geral
-- **[USAGE.md](https://github.com/alosiolemos/painel-execucao/blob/main/USAGE.md)** — Uso detalhado
-
-### 📊 Tech Stack
-
-- **Extension:** TypeScript + VS Code API + esbuild
-- **Frontend:** HTML5 + CSS + Vanilla JavaScript (puro)
-- **Backend:** Node.js (collector.js)
-- **Storage:** JSONL local (~/.painel-execucao/)
-
-### 🐛 Conhecidos
-
-- ✅ Todos os testes locais passando
-- ✅ XSS removido
-- ✅ Webview incluída no .vsix
-- ✅ Auto-refresh funcionando
-
-### ⏭️ Próximas Fases
-
-- **Phase 2:** Grafo de dependências (React Flow)
-- **Phase 3:** Comparison (diff entre execuções)
-- **Phase 4:** Gemini IA (explicações, opcional)
-- **Phase 5:** Themes customizáveis
-
-### 🙏 Licença
-
-MIT — Livre para uso pessoal e comercial
+| Versão | Fase | Foco |
+|--------|------|------|
+| 0.1.x | Foundation | Timeline de eventos, XSS safe |
+| **0.2.0** | **Canvas Workflow** | **Workflow visual, canvas horizontal** |
+| 0.3.0 | React Flow | Canvas com pan/zoom completo |
+| 0.4.0 | Comparison | Diff entre execuções |
+| 0.5.0 | Gemini | Explicações IA (opt-in) |
 
 ---
 
-**Release Date:** 2026-11-07  
-**Author:** [@alosiolemos](https://github.com/alosiolemos)  
-**GitHub:** https://github.com/alosiolemos/painel-execucao
+## [0.1.1] — 2026-11-07 (Hotfix)
+
+### 🐛 Correções
+
+- Corrige CommonJS/ESM mismatch (extension agora usa import/export correto)
+- Reduz tamanho .vsix para 6.9 KB
+
+---
+
+## [0.1.0-alpha] — 2026-11-07 (Foundation)
+
+### ✨ Inicial
+
+- Timeline de eventos do Claude Code
+- Demo vs Real badges
+- Redaction automática
+- HTML5 puro
+
+---
+
+## Como Instalar v0.2.0
+
+```
+1. Extensions (Ctrl+Shift+X) 
+2. "..." → "Install from VSIX"
+3. Selecione: painel-execucao-0.2.0.vsix
+4. Cmd+Shift+P → "Abrir Painel Execução"
+   OU clique no ícone na Activity Bar
+```
+
+## Próximos
+
+- React Flow canvas com pan/zoom
+- Salvar posições de nós
+- Comparison entre runs
+- Gemini explanations (opt-in)
+
+---
+
+**Status:** Phase 2 (Canvas Foundation) entregue ✅  
+**GitHub:** https://github.com/alosiolemos/painel-execucao  
+**Licença:** MIT
