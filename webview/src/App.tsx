@@ -32,7 +32,8 @@ function App() {
   const [selectedStage, setSelectedStage] = useState<Stage | null>(null);
   const [loading, setLoading] = useState(true);
   const [historyOpen, setHistoryOpen] = useState(true);
-  const [editingTitle, setEditingTitle] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingValue, setEditingValue] = useState<string>('');
   const apiInitialized = useRef(false);
 
   const currentExecution = executions.find((e) => e.id === currentId);
@@ -129,7 +130,8 @@ function App() {
     setExecutions((prev) =>
       prev.map((e) => (e.id === execId ? { ...e, title: newTitle } : e))
     );
-    setEditingTitle(null);
+    setEditingId(null);
+    setEditingValue('');
   };
 
   if (!currentExecution) {
@@ -187,21 +189,25 @@ function App() {
                 >
                   <div className="item-header">
                     <div className="item-title">
-                      {editingTitle === exec.id ? (
+                      {editingId === exec.id ? (
                         <input
                           type="text"
-                          value={exec.title || exec.workflow.name}
+                          value={editingValue}
                           onChange={(e) => {
                             e.stopPropagation();
+                            setEditingValue(e.target.value);
                           }}
                           onBlur={(e) => {
                             e.stopPropagation();
-                            updateExecutionTitle(exec.id, e.target.value);
+                            updateExecutionTitle(exec.id, editingValue || exec.workflow.name);
                           }}
                           onKeyDown={(e) => {
                             e.stopPropagation();
                             if (e.key === 'Enter') {
-                              updateExecutionTitle(exec.id, e.currentTarget.value);
+                              updateExecutionTitle(exec.id, editingValue || exec.workflow.name);
+                            } else if (e.key === 'Escape') {
+                              setEditingId(null);
+                              setEditingValue('');
                             }
                           }}
                           autoFocus
@@ -211,7 +217,8 @@ function App() {
                         <span
                           onDoubleClick={(e) => {
                             e.stopPropagation();
-                            setEditingTitle(exec.id);
+                            setEditingId(exec.id);
+                            setEditingValue(exec.title || exec.workflow.name);
                           }}
                           title="Duplo clique para renomear"
                         >

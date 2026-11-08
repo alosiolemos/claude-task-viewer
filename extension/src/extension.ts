@@ -111,12 +111,26 @@ function inferDemandForEvent(event: any): string | null {
 function generateSummary(demandTitle: string, events: any[], state?: string): { title: string; summary: string } {
   const actionCount = events.length;
   const hasErrors = events.some((e: any) => e.event?.error);
-  const isRunning = state === 'running';
-  const statusSuffix = isRunning ? ' · ⏱️ Executando' : (hasErrors ? ' · ⚠️ Erros' : ' · ✅ Concluída');
+  const statusSuffix = hasErrors ? ' · ⚠️ Erros' : ' · ✅ Concluída';
 
   if (demandTitle === 'Auditoria') {
-    const ativos = events.filter((e: any) => e.event?.tool_input?.file_path?.includes('ativos')).length;
-    const excluidos = events.filter((e: any) => e.event?.tool_input?.file_path?.includes('excluido')).length;
+    let ativos = 0;
+    let excluidos = 0;
+
+    // Extrair números reais da última etapa (relatório final)
+    const reportEvent = events.reverse().find((e: any) =>
+      e.event?.tool_input?.file_path?.includes('RELATORIO') ||
+      e.event?.tool_input?.file_path?.includes('relatorio')
+    );
+
+    if (reportEvent?.event?.tool_response?.file?.content) {
+      const content = reportEvent.event.tool_response.file.content;
+      const ativosMatch = content.match(/\*\*Registros Ativos\*\*[^(]*\((\d+)/);
+      const excluidosMatch = content.match(/\*\*Registros Excluídos\*\*[^(]*\((\d+)/);
+      if (ativosMatch) ativos = parseInt(ativosMatch[1], 10);
+      if (excluidosMatch) excluidos = parseInt(excluidosMatch[1], 10);
+    }
+
     const title = 'Auditar registros';
     const summary = ativos > 0 || excluidos > 0
       ? `${ativos} ativos, ${excluidos} excluídos${statusSuffix}`
@@ -228,11 +242,9 @@ function convertEventsToWorkflow(demandTitle: string, events: any[]): any {
   const stages = groupEventsIntoStages(demandTitle, events);
   const executionId = 'exec-' + demandTitle.toLowerCase().replace(/\s+/g, '-') + '-' + Math.floor((firstEventTime || Date.now()) / 1000);
 
-  // Se último evento é recente (menos de 10 segundos), considerar como "running"
-  const now = Date.now();
-  const isRunning = lastEventTime && (now - lastEventTime) < 10000;
+  // Estado determinado apenas por erros, não por tempo
   const hasErrors = events.some((e: any) => e.event?.error);
-  const state = isRunning ? 'running' : (hasErrors ? 'failed' : 'completed');
+  const state = hasErrors ? 'failed' : 'completed';
 
   const { title, summary } = generateSummary(demandTitle, events, state);
 
