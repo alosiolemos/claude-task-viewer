@@ -1,155 +1,342 @@
 # Painel Execução
 
-Painel local em VS Code para acompanhar, auditar e comparar a execução de trabalhos do Claude Code, semelhante ao n8n.
+📊 **Painel local em VS Code** para acompanhar, auditar e inspecionar execução de tarefas do Claude Code em tempo real. Similar ao N8N, mas integrado diretamente no VS Code.
 
-**Status:** 🧪 Em desenvolvimento — Validação de captura de eventos
-
-## O que é
-
-Um painel visual que mostra:
-
-- 📊 **Etapas planejadas vs reais** — veja o fluxo esperado e o que realmente aconteceu
-- 🔍 **Entrada/saída de cada nó** — inspecione dados em cada etapa
-- 📈 **Comparação entre execuções** — identifique divergências
-- 🤖 **IA opcional (Gemini)** — explique anomalias, sem ser fonte de verdade
-
-Tudo **local**, **sem internet**, **sem custos**, com interface em **português do Brasil**.
-
-## Arquitetura
-
-```
-VS Code Extension (Webview React)
-    ↓
-    Backend Collector (Node.js local)
-    ↓
-    Armazenamento Local (JSON/SQLite)
-    ↓
-    Captura de Eventos (Hooks do Claude Code)
-```
-
-## Estrutura do Projeto
-
-```
-painel-execucao/
-├── collector.js           # Script Node que registra eventos
-├── reader.js              # Leitor de eventos capturados (debug)
-├── PRODUCT.md             # Contexto de produto (Impeccable)
-├── TESTE-CAPTURA.md       # Guia para validar captura real
-├── tasks/
-│   ├── plan.md           # Plano de implementação detalhado
-│   └── todo.md           # Lista de tarefas verificável
-├── src/
-│   ├── backend/          # (Em desenvolvimento)
-│   ├── extension/        # (Em desenvolvimento — VS Code Extension)
-│   └── frontend/         # (Em desenvolvimento — React Webview)
-└── README.md
-```
-
-## Como Contribuir / Desenvolver
-
-### Fase Atual: Validação
-
-Estamos validando se é possível capturar eventos reais do Claude Code.
-
-**Para testar a captura:**
-
-```bash
-# 1. Ativar hook de teste
-cp painel-execucao-test-hooks.json ~/.claude/painel-execucao-test-hooks.json
-
-# 2. Reiniciar Claude Code
-
-# 3. Executar ações no Claude Code (ler arquivo, bash, etc.)
-
-# 4. Ver eventos capturados
-node reader.js painel-execucao
-```
-
-Veja [TESTE-CAPTURA.md](TESTE-CAPTURA.md) para instruções completas.
-
-### Próximas Fases
-
-1. ✅ **Validação** — Confirmar captura real (em progresso)
-2. 📋 **Foundation** — Setup, backend, extension, frontend base
-3. 📊 **Visualização** — Grafo com React Flow, inspetor
-4. 🔄 **Comparação** — Diff entre execuções
-5. 🤖 **Gemini** — Explicações opcionais (desativado por padrão)
-6. 📦 **Publicação** — Repositório público, documentação final
-
-Veja [tasks/plan.md](tasks/plan.md) para o plano completo.
-
-## Requisitos
-
-- **Node.js 18+**
-- **Claude Code** (extensão do VS Code)
-- **Git** (para contribuir)
-
-## Configuração Rápida (Depois)
-
-```bash
-# Instalar dependências
-npm install
-
-# Rodar extensão em desenvolvimento
-npm run dev:extension
-
-# Rodar backend collector
-npm run dev:collector
-
-# Ver interface em navegador (durante dev)
-npm run dev:webview
-```
-
-(Scripts a serem adicionados conforme a implementação avança)
-
-## Privacidade e Segurança
-
-- ✅ **Captura desativada por padrão** — só ativa em projeto explicitamente marcado
-- ✅ **Dados reduzidos** — senhas, tokens e caminhos privados removidos antes de gravar
-- ✅ **Sem internet** — tudo local, nenhuma transmissão externa (Gemini opcional)
-- ✅ **Falhas isoladas** — erros do coletor nunca interrompem Claude Code
-
-## Gemini (Opcional)
-
-Se quiser explicações por IA:
-
-1. Copie `.env.example` para `.env.local` (ignorado pelo git)
-2. Preencha `GEMINI_API_KEY` e `GEMINI_MODEL` com sua conta Gemini
-3. Defina `GEMINI_ENABLED=true`
-
-**Sem Gemini:**
-- O painel funciona 100% offline
-- Sem dependência de chave de API
-- Sem custos extras
-
-## Desinstalação
-
-Para remover o painel completamente:
-
-```bash
-# 1. Remover hook de teste (se ativado)
-rm ~/.claude/painel-execucao-test-hooks.json
-
-# 2. Remover dados coletados
-rm -rf ~/.painel-execucao/
-
-# 3. Desinstalar extensão (depois, quando estiver no marketplace)
-```
-
-## Contribuindo
-
-Este é um projeto pessoal em desenvolvimento. Contribuições, sugestões e relatos de bugs são bem-vindos via Issues.
-
-## Licença
-
-(A definir)
-
-## Referências
-
-- [Plano de Implementação](tasks/plan.md)
-- [Contexto de Produto](PRODUCT.md)
-- [Guia de Teste](TESTE-CAPTURA.md)
+**Status:** ✅ **Foundation Completa** — Painel funcional, Backend validado, Extension buildada
 
 ---
 
-**Última atualização:** 2026-11-06
+## ✨ O Que Você Consegue Ver
+
+- ✅ **Timeline de eventos** — Todas as ações em ordem, com timestamps
+- ✅ **Entrada & Saída** — O que cada ferramenta recebeu e retornou
+- ✅ **Inspetor JSON** — Expandir detalhes de cada evento
+- ✅ **Demo vs Real** — Badges distinguem eventos de teste vs captura real
+- ✅ **Redação segura** — Caminhos privados e tokens automaticamente removidos
+
+---
+
+## 🚀 Quick Start
+
+### 1️⃣ Instalar
+
+```bash
+git clone https://github.com/alosiolemos/painel-execucao.git
+cd painel-execucao
+npm install
+npm run ext:build
+```
+
+### 2️⃣ Testar Com Demo
+
+```bash
+npm run collect:demo          # Popula 4 eventos de teste
+npm run collect:read          # Visualiza no CLI
+# ou abra em VS Code: F5 → Extension Development Host
+```
+
+### 3️⃣ Usar Com Dados Reais
+
+1. Reinicie Claude Code (settings.local.json já tem hooks)
+2. Execute ação no Claude Code: *"Leia o arquivo README.md"*
+3. Novo evento aparece no painel com badge "REAL"
+
+---
+
+## 📁 Estrutura
+
+```
+painel-execucao/
+├── collector.js               ← Backend: captura PostToolUse via stdin
+├── reader.js                  ← CLI: visualiza eventos
+├── settings.local.json        ← Hooks configurados
+├── extension/
+│   ├── src/
+│   │   ├── extension.ts       ← Entry point VS Code Extension
+│   │   ├── event-reader.ts    ← Parser JSONL + watch
+│   │   └── painel-provider.ts ← Webview provider
+│   └── dist/extension.js      ← Build (4.9kb) ✅
+├── webview/
+│   ├── dist/index.html        ← UI estática (HTML5 puro)
+│   └── src/
+│       ├── App.tsx            ← React component (timeline)
+│       └── index.tsx          ← Entry React
+├── demo-events.jsonl          ← 4 eventos de teste
+├── USAGE.md                   ← Guia completo
+├── INVESTIGACAO-ACHADOS.md    ← Validação técnica
+├── STATUS.md                  ← Roadmap
+├── SETUP-GITHUB.md            ← Como publicar
+└── package.json               ← Monorepo (extension + webview)
+```
+
+---
+
+## 🏗️ Arquitetura
+
+```
+Claude Code Executando
+    ↓
+    PostToolUse Hook (registrado em settings.local.json)
+    ↓
+    collector.js (stdin JSON)
+    ├─ Redige caminhos: /home/user → ~
+    ├─ Redige tokens: 40+ chars → [REDACTED]
+    ├─ Redige campos: password, token, secret, api_key → [REDACTED]
+    └─ Salva em ~/.painel-execucao/data/{projeto}/events.jsonl
+    ↓
+    VS Code Extension (TypeScript)
+    ├─ Registra webview panel
+    ├─ Lê events.jsonl
+    └─ Envia para frontend
+    ↓
+    Webview HTML5 (JavaScript puro)
+    ├─ Timeline interativa
+    ├─ Cards expandíveis
+    ├─ JSON preview entrada/saída
+    └─ Badges Demo/Real
+```
+
+---
+
+## 📊 O Que Cada Fase Adiciona
+
+| Fase | O que você vê | Status |
+|------|---|---|
+| **Foundation** | Timeline + inspetor + demo | ✅ **Feito** |
+| **Visualization** | Grafo de dependências | ⏳ Próxima |
+| **Comparison** | Diff entre 2 execuções | ⏳ After |
+| **Gemini** | Explicações IA (opt-in) | ⏳ Future |
+
+---
+
+## 🎯 Demo vs Real
+
+### 📌 Demo Events (Amarelo)
+
+4 eventos pré-carregados para validar UI:
+1. Read — Lê arquivo
+2. Bash — Executa comando
+3. Grep — Busca padrão
+4. Edit — Modifica arquivo
+
+**Como usar:**
+```bash
+npm run collect:demo           # Setup
+npm run collect:read           # Ver em CLI
+# Ou abra em VS Code com F5
+```
+
+### 🔵 Real Events (Azul)
+
+Capturados do Claude Code durante a sessão:
+- PostToolUse hook ativo
+- Qualquer ação que você fizer (Read, Bash, Grep, etc.)
+- Mostra entrada/saída reais
+
+**Como ativar:**
+1. Reinicie Claude Code (settings.local.json pronto)
+2. Execute: *"Leia um arquivo"*
+3. Novo evento aparece com badge "REAL"
+
+---
+
+## 🔒 Segurança
+
+- ✅ **Redação automática:**
+  - Caminhos: `C:\Users\alois\...` → `~\...`
+  - Tokens: `abc123def456...` → `[REDACTED_TOKEN]`
+  - Campos sensíveis: `password`, `token`, `secret`, `api_key` → `[REDACTED]`
+
+- ✅ **Proteção contra edge cases:**
+  - Profundidade máxima 8 níveis
+  - Limites em arrays/objects (100 each)
+  - Detecção de strings codificadas longas
+
+- ✅ **Armazenamento local:**
+  - Nenhuma sincronização
+  - Nenhuma telemetria
+  - Tudo fica em ~/.painel-execucao/
+
+- ✅ **GitHub seguro:**
+  - .gitignore strict
+  - Nenhum .env ou credenciais no repo
+
+---
+
+## 📋 Requisitos
+
+- **Node.js** ≥ 18.0.0
+- **VS Code** ≥ 1.85
+- **Git** (para clonar)
+
+## 💡 Como Usar
+
+### Via CLI
+
+```bash
+# Ver eventos capturados
+node reader.js painel-execucao
+
+# Ver projeto diferente
+node reader.js seu-projeto
+
+# Limpar dados (demo/teste)
+rm -rf ~/.painel-execucao/data/seu-projeto
+```
+
+### Via VS Code Extension
+
+1. **F5** → "Extension Development Host" (nova janela)
+2. **View** → Open View Container "Painel Execução"
+3. **ou clique no ícone na Activity Bar**
+4. Veja timeline de eventos em tempo real
+
+### Configuração (Opcional)
+
+Editar `settings.local.json` para:
+- Mudar projeto monitorado
+- Adicionar novos hooks
+- Customizar redação
+
+---
+
+## 🔗 Documentação Completa
+
+- **[USAGE.md](USAGE.md)** — Guia detalhado de uso
+- **[INVESTIGACAO-ACHADOS.md](INVESTIGACAO-ACHADOS.md)** — Validação técnica (o que funciona, o que não)
+- **[STATUS.md](STATUS.md)** — Roadmap e progresso
+- **[SETUP-GITHUB.md](SETUP-GITHUB.md)** — Como publicar seu fork
+
+---
+
+## 🎮 Controles no Painel
+
+| Ação | Resultado |
+|---|---|
+| Clicar em evento | Expande detalhes |
+| Clicar em "Entrada" | Mostra JSON dos argumentos (tool_input) |
+| Clicar em "Saída" | Mostra JSON do resultado (tool_response) |
+| Badge amarelo "DEMO" | Evento de teste (pré-carregado) |
+| Badge azul "REAL" | Capturado do PostToolUse real |
+
+---
+
+## 🧠 O Que o Painel Captura
+
+### Cada Evento Contém
+
+```json
+{
+  "timestamp": "2026-11-07T22:30:45.123Z",
+  "projectName": "painel-execucao",
+  "event": {
+    "tool_use_id": "tool_use_abc123xyz",
+    "tool_name": "Read",
+    "tool_input": {
+      "file_path": "~/README.md"
+    },
+    "tool_response": {
+      "status": "success",
+      "content": "# Painel Execução..."
+    },
+    "captureSource": "stdin",
+    "available": true
+  }
+}
+```
+
+### Ferramentas Capturadas
+
+- **Read** — Lê arquivo (path + conteúdo)
+- **Bash** — Executa comando (cmd + stdout/stderr)
+- **Grep** — Busca padrão (pattern + matches)
+- **Glob** — Lista arquivos (pattern + files)
+- **Edit** — Modifica arquivo (path + mudança)
+- **Write** — Escreve arquivo (path + conteúdo)
+- **Artifact** — Cria artefato (tipo + link)
+- E qualquer outra ferramenta do Claude Code
+
+---
+
+## 🐛 Troubleshooting
+
+### Painel não aparece em VS Code
+```bash
+# 1. Rebuild
+npm run ext:build
+
+# 2. F5 para recarregar extension
+# 3. View → Open View Container "Painel Execução"
+```
+
+### Eventos não aparecem
+```bash
+# Verificar dados
+ls -la ~/.painel-execucao/data/painel-execucao/
+
+# Ver em CLI
+node reader.js painel-execucao
+
+# Reset e demo
+npm run collect:demo
+npm run collect:read
+```
+
+### "Badge REAL" mas sem dados
+- Confirme: settings.local.json contém hooks
+- Reinicie Claude Code
+- Execute ação: *"Leia um arquivo"*
+
+---
+
+## 🤖 Gemini (Opcional)
+
+Explicações por IA para eventos anômalos:
+
+1. Copiar `.env.example` para `.env.local`
+2. Preencher `GEMINI_API_KEY` (Google AI Studio)
+3. Definir `GEMINI_ENABLED=true`
+
+**Sem Gemini:**
+- Painel funciona 100% offline ✅
+- Sem custos ✅
+- Padrão desativado ✅
+
+---
+
+## 📦 O Que Ainda Falta
+
+- 🔄 **Visualization:** Grafo de dependências (React Flow)
+- 🔍 **Inspetor avançado:** Diff entre campos
+- 📊 **Comparison:** Lado a lado de 2 execuções
+- 🤖 **Gemini:** Inteligência em anomalias
+- 🎨 **Polish:** Temas customizáveis
+
+---
+
+## 🤝 Contribuindo
+
+Bugs, sugestões ou melhorias? Abra uma issue com:
+- O que testou
+- O que esperava
+- O que viu
+- Anexar screenshot se possível
+
+---
+
+## 📄 Licença
+
+MIT — Livre para uso pessoal e comercial
+
+---
+
+## 🔗 Links
+
+- **GitHub:** https://github.com/alosiolemos/painel-execucao
+- **Issues:** https://github.com/alosiolemos/painel-execucao/issues
+- **Releases:** https://github.com/alosiolemos/painel-execucao/releases
+
+---
+
+**Última atualização:** 2026-11-07  
+**Built with:** Node.js, TypeScript, React, VS Code Extension API
