@@ -1,9 +1,9 @@
-# Visualização Modular de Execução das Tarefas do Claude — 0.9.3
+# Visualização Modular de Execução das Tarefas do Claude — 0.9.4
 
 Mostra, em cartões conectados dentro do VS Code, o que o Claude Code fez em cada tarefa: pedidos, leituras, edições, comandos, erros e respostas. Inspirada em visualizações de workflow como as do n8n, sem vínculo com o n8n.
 
 ## Instalar e abrir
-1. Extensões › … › Instalar a partir do VSIX › `painel-execucao-0.9.3.vsix`.
+1. Extensões › … › Instalar a partir do VSIX › `painel-execucao-0.9.4.vsix`.
 2. Abra a pasta do projeto onde o Claude Code trabalha.
 3. Ctrl+Shift+P › **Abrir Visualização de Execução do Claude**.
 
@@ -14,7 +14,7 @@ Mostra, em cartões conectados dentro do VS Code, o que o Claude Code fez em cad
 - **Trocar sessão** escolhe outra transcrição do projeto; o título vem do próprio Claude Code.
 
 ## Tarefas
-- O que já existia na transcrição ao abrir o painel pela primeira vez fica em **Histórico legado**.
+- Na primeira abertura, rodadas anteriores concluídas ficam em **Histórico legado**; um pedido em andamento inicia a tarefa atual junto com suas ações e resposta.
 - Novas ações entram na **tarefa atual**. Mensagens de correção continuam a mesma tarefa.
 - **Nova tarefa**: as próximas ações vão para uma nova tarefa. **Continuar esta tarefa**: torna atual a tarefa exibida.
 - **Ocultar tarefas** / **Mostrar tarefas** recolhe a lista para dar mais espaço ao fluxo. A preferência fica salva e a seleção não muda.

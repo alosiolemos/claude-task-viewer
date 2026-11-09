@@ -4,7 +4,7 @@
 
 ## Instalação
 
-1. Baixe **painel-execucao-0.9.3.vsix** nos [Assets da versão 0.9.3](https://github.com/alosiolemos/claude-task-viewer/releases/tag/v0.9.3).
+1. Baixe **painel-execucao-0.9.4.vsix** nos [Assets da versão 0.9.4](https://github.com/alosiolemos/claude-task-viewer/releases/tag/v0.9.4).
 2. No VS Code: **Extensões → … → Instalar a partir do VSIX**.
 3. Selecione o arquivo e recarregue a janela se solicitado.
 4. Abra a pasta em que está trabalhando com o Claude Code.
@@ -29,7 +29,7 @@ O aplicativo usa os arquivos locais do Claude Code. Ele não lê automaticamente
 | **Continuar esta tarefa** | Para direcionar as próximas ações à tarefa exibida |
 | **Renomear tarefa** | Para trocar um título automático por um nome que você reconhece |
 
-Antes da primeira abertura, os registros existentes ficam no **Histórico legado**. Novas ações vão para a tarefa atual; se não houver uma, a próxima ação pode iniciar uma tarefa. Dar nome antes de trabalhar ajuda a manter o histórico organizado.
+Na primeira abertura, rodadas anteriores concluídas ficam no **Histórico legado**. Se o último pedido ainda estiver em andamento, ele inicia a tarefa atual e permanece junto das ações e da resposta. Novas ações vão para a tarefa atual; se não houver uma, a próxima ação pode iniciar uma tarefa. Dar nome antes de trabalhar ajuda a manter o histórico organizado.
 
 ## Navegar e abrir os detalhes
 

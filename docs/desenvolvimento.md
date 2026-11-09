@@ -62,3 +62,7 @@ Testes que consultam transcrições reais são opcionais e locais: nunca inclua 
 - O nome público do repositório pode mudar sem mudar `name`, `publisher` e as chaves internas de configuração da extensão.
 
 Exportação para auditoria, suporte completo a subagentes e novos assistentes ficam fora da versão atual. Contribuições devem preservar simplicidade, leitura local e uma instalação pronta para quem não programa.
+
+## Limpeza da versão 0.9.4
+
+Foram retirados os testes do conversor antigo e da interface React desativada, os scripts de demo do coletor e as compilações antigas da interface. Os testes de leitor, tarefas, detalhes, Gemini e interface atual permanecem em `npm test` e `npm run test:ui`. Os instaladores anteriores não ficam no diretório local; releases antigas continuam disponíveis no GitHub. As transcrições, o estado das tarefas, o SecretStorage e arquivos de configuração locais não são removidos.

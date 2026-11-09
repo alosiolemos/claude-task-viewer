@@ -169,3 +169,36 @@ test('visão: formato desconhecido gera aviso explícito', () => {
   const payload = view.buildPayload(model.events, store.emptyState(), model.report(), '', '');
   assert.ok(payload.warnings.some(w => w.includes('não reconhecido')));
 });
+
+test('abertura: pedido ainda em andamento fica junto das ações, só rodada concluída vai ao legado',()=>{
+ const model=new TranscriptModel(),state=store.emptyState();
+ const old=round('Antigo concluído',['antigo.js']);const pending=round('Consultar enriquecimento',['atual.js'],{reply:false});
+ feed(model,state,[...old,...pending]);const task=state.activeTaskId;
+ assert.ok(task);assert.equal(state.tasks[0].title,'Consultar enriquecimento');
+ const owners=tasksOf(model,state);assert.ok(owners.slice(0,3).every(x=>x===store.LEGACY_ID));assert.ok(owners.slice(3).every(x=>x===task));
+ feed(model,state,[fx.text(id('a'),id('m'),'Resposta da consulta','end_turn',T(seq))]);assert.equal(state.tasks.length,1);assert.equal(tasksOf(model,state).at(-1),task);
+ const saved=store.normalizeState(JSON.parse(JSON.stringify(state)));assert.equal(store.assignNewEvents(saved,model.events),false);assert.deepEqual(tasksOf(model,saved),tasksOf(model,state));
+});
+
+test('abertura: só pedido presente já inicia tarefa com título, sem legado vazio',()=>{
+ const model=new TranscriptModel(),state=store.emptyState();feed(model,state,[fx.prompt(id('u'),'Vamos testar',T(seq))]);
+ assert.equal(state.tasks.length,1);assert.equal(state.tasks[0].title,'Vamos testar');assert.equal(state.legacyEndKey,null);assert.equal(state.selectedTaskId,state.activeTaskId);
+});
+
+test('reparo: recupera pedido separado pela versão anterior sem trocar ID nem duplicar',()=>{
+ const model=new TranscriptModel();model.ingest(round('Consulta em andamento',['projeto.js']));const events=model.events;
+ const state=store.emptyState();Object.assign(state,{initialized:true,legacyEndKey:events[0].key,lastAssignedKey:events.at(-1).key,activeTaskId:'existente',selectedTaskId:'existente',tasks:[{id:'existente',title:'Tarefa sem título',titleSource:'default',createdAt:T(1)}],segments:[{startKey:events[1].key,taskId:'existente'}]});
+ assert.equal(store.assignNewEvents(state,events),true);assert.equal(state.activeTaskId,'existente');assert.equal(state.tasks[0].title,'Consulta em andamento');assert.ok(tasksOf(model,state).every(x=>x==='existente'));assert.equal(store.assignNewEvents(state,events),false);
+});
+
+test('reparo: não incorpora pedido antigo já respondido nem altera tarefa nomeada pelo usuário',()=>{
+ const model=new TranscriptModel();model.ingest(round('Antigo',['a.js']));const events=model.events;
+ const state=store.emptyState();Object.assign(state,{initialized:true,legacyEndKey:events.at(-1).key,lastAssignedKey:events.at(-1).key,activeTaskId:'manual',tasks:[{id:'manual',title:'Meu título',titleSource:'user',createdAt:T(1)}],segments:[]});
+ assert.equal(store.assignNewEvents(state,events),false);assert.equal(state.tasks[0].title,'Meu título');assert.ok(tasksOf(model,state).every(x=>x===store.LEGACY_ID));
+});
+
+test('reparo: seleção do legado que ficou vazio volta para a tarefa recuperada',()=>{
+ const model=new TranscriptModel();model.ingest(round('Pedido recuperado',['projeto.js']));const events=model.events;
+ const state=store.emptyState();Object.assign(state,{initialized:true,legacyEndKey:events[0].key,lastAssignedKey:events.at(-1).key,activeTaskId:'existente',selectedTaskId:store.LEGACY_ID,selectionPinned:true,tasks:[{id:'existente',title:'Tarefa sem título',titleSource:'default',createdAt:T(1)}],segments:[{startKey:events[1].key,taskId:'existente'}]});
+ store.assignNewEvents(state,events);assert.equal(state.selectedTaskId,'existente');assert.equal(state.selectionPinned,false);assert.equal(view.buildPayload(events,state,model.report(),'','').tasks.some(t=>t.legacy),false);
+});

@@ -1,5 +1,13 @@
 # 📝 Changelog
 
+## [0.9.4] — 2026-11-09
+
+- Primeira abertura mantém pedido em andamento, ações e resposta na mesma tarefa, com título derivado do pedido.
+- Apenas rodadas anteriores concluídas ficam no legado; não cria legado vazio para um pedido inicial.
+- Reparo restrito da separação antiga entre pedido no legado e primeira tarefa sem título, preservando o ID e tarefas nomeadas manualmente.
+
+- Limpeza de instaladores anteriores, demos e testes da interface antiga; testes atuais preservados.
+
 ## [0.9.3] — 2026-11-09
 
 - Resumo completo com prazo de 90 segundos e thinkingBudget zero, preservando o limite de saída e uma chamada por clique.

@@ -12,11 +12,11 @@ Criei este projeto porque também estou aprendendo e queria uma experiência mai
 
 A implementação foi construída com Claude Code, com apoio do Codex na revisão, nos testes e na preparação da publicação.
 
-**[Baixar a versão 0.9.3](https://github.com/alosiolemos/claude-task-viewer/releases/tag/v0.9.3)** · [Como instalar e usar](docs/como-usar.md) · [Código e testes](docs/desenvolvimento.md)
+**[Baixar a versão 0.9.4](https://github.com/alosiolemos/claude-task-viewer/releases/tag/v0.9.4)** · [Como instalar e usar](docs/como-usar.md) · [Código e testes](docs/desenvolvimento.md)
 
 ![Uma tarefa do Claude representada em cartões conectados: solicitação, leitura, edição, verificação e resposta](docs/images/fluxo-tarefa.png)
 
-*Interface real da versão 0.9.3, com dados ilustrativos. As capturas não contêm conversas, chaves ou arquivos pessoais.*
+*Interface real da versão 0.9.4, com dados ilustrativos. As capturas não contêm conversas, chaves ou arquivos pessoais.*
 
 ## O que você consegue acompanhar
 
@@ -60,8 +60,8 @@ As informações abrem **abaixo do fluxo**, em um painel de altura ajustável. O
 
 Você precisa do **VS Code** e do **Claude Code gravando transcrições locais**. O fluxo de instalação e uso foi validado no Windows; outros sistemas ainda precisam de validação.
 
-1. Abra a [página da versão 0.9.3](https://github.com/alosiolemos/claude-task-viewer/releases/tag/v0.9.3).
-2. Em **Assets**, baixe **`painel-execucao-0.9.3.vsix`**. Esse é o instalador; não é necessário baixar o código-fonte.
+1. Abra a [página da versão 0.9.4](https://github.com/alosiolemos/claude-task-viewer/releases/tag/v0.9.4).
+2. Em **Assets**, baixe **`painel-execucao-0.9.4.vsix`**. Esse é o instalador; não é necessário baixar o código-fonte.
 3. No VS Code, abra **Extensões** (`Ctrl+Shift+X`), clique em **…** e escolha **Instalar a partir do VSIX / Install from VSIX**.
 4. Selecione o arquivo baixado. Se o VS Code pedir, recarregue a janela.
 5. Abra a mesma pasta em que está usando o Claude Code.
@@ -69,7 +69,7 @@ Você precisa do **VS Code** e do **Claude Code gravando transcrições locais**
 
 **Não precisa de terminal, npm, Python, servidor ou chave do Gemini para usar o painel básico.** O VSIX já vem pronto. Se aparecer um bloqueio de segurança do sistema, não desative a proteção: registre o erro para investigação.
 
-## Novidades da versão 0.9.3
+## Novidades da versão 0.9.4
 
 O título e o identificador da tarefa ficam à esquerda do cabeçalho. À direita, passe o mouse pelos quatro ícones: **Trocar sessão**, **Explicar tarefa inteira com Gemini**, **Configurações** e **Nova tarefa**. O resumo abre abaixo do fluxo, em seções responsivas.
 
@@ -81,7 +81,7 @@ O título e o identificador da tarefa ficam à esquerda do cabeçalho. À direit
 4. Clique em um cartão para consultar os detalhes.
 5. Correções do mesmo trabalho continuam na tarefa atual. Para retomar outra tarefa do histórico, selecione-a e use **Continuar esta tarefa**.
 
-O conteúdo que já existia antes da primeira abertura fica em **Histórico legado**. Consultar uma tarefa antiga não muda automaticamente o destino das novas ações. **Ocultar tarefas** amplia a área do fluxo; **Mais recente** ajuda a voltar à última ação e **Ajustar à tela** mostra o conjunto.
+Na primeira abertura, rodadas já concluídas ficam em **Histórico legado**. Se houver um pedido em andamento, ele e as ações seguintes ficam juntos na tarefa atual. Consultar uma tarefa antiga não muda automaticamente o destino das novas ações. **Ocultar tarefas** amplia a área do fluxo; **Mais recente** ajuda a voltar à última ação e **Ajustar à tela** mostra o conjunto.
 
 > **Primeiro teste:** com uma nova tarefa criada no painel, peça ao Claude: “Leia o README.md e explique a finalidade do projeto. Não altere arquivos.” Observe a leitura e a resposta no mesmo fluxo.
 
@@ -120,7 +120,7 @@ flowchart LR
 
 - **Exportar tarefa:** salvar um registro para consulta e comparação, sem tratar o arquivo como prova de sucesso ou certificação de auditoria.
 
-Estas são possibilidades futuras. A versão 0.9.3 já explica etapas e a tarefa selecionada; a exportação não está implementada.
+Estas são possibilidades futuras. A versão 0.9.4 já explica etapas e a tarefa selecionada; a exportação não está implementada.
 
 ## Para explorar e contribuir
 

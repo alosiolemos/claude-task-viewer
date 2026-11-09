@@ -69,26 +69,54 @@ function hasEvents(state: TaskState, taskId: string): boolean {
   return state.segments.some(s => s.taskId === taskId);
 }
 
-/**
- * First call marks everything already in the transcript as legacy. Later calls append
- * only events after lastAssignedKey to the active task (creating one if none exists).
- */
+/** Earliest human prompt after the last observed final reply, if that round is open. */
+function openPromptIndex(events: TranscriptEvent[], through = events.length - 1): number {
+  let start = 0;
+  for (let i = 0; i <= through; i++) if (events[i].kind === 'reply') start = i + 1;
+  for (let i = start; i <= through; i++) if (events[i].kind === 'prompt') return i;
+  return -1;
+}
+
+/** Repair only the old bootstrap split: an unnamed first task immediately after an open legacy prompt. */
+function repairBootstrapSplit(state: TaskState, events: TranscriptEvent[]): boolean {
+  if (!state.legacyEndKey || state.tasks.length !== 1 || !state.segments.length) return false;
+  const task = state.tasks[0];
+  if (task.titleSource !== 'default' || task.title !== 'Tarefa sem título') return false;
+  const boundary = events.findIndex(e => e.key === state.legacyEndKey);
+  if (boundary < 0 || state.segments[0].taskId !== task.id || state.segments[0].startKey !== events[boundary + 1]?.key) return false;
+  const prompt = openPromptIndex(events, boundary);
+  if (prompt < 0) return false;
+  state.legacyEndKey = prompt > 0 ? events[prompt - 1].key : null;
+  state.segments[0].startKey = events[prompt].key;
+  task.title = shortTitle(events[prompt].text || '') || task.title;
+  task.titleSource = 'prompt';
+  if (state.selectedTaskId === LEGACY_ID && state.legacyEndKey === null) {
+    state.selectedTaskId = task.id;
+    state.selectionPinned = task.id !== state.activeTaskId;
+  }
+  return true;
+}
+
+/** Completed pre-existing rounds stay legacy; a round already in progress starts in the active task. */
 export function assignNewEvents(state: TaskState, events: TranscriptEvent[], now = Date.now()): boolean {
   const lastKey = events.length ? events[events.length - 1].key : null;
   if (!state.initialized) {
     state.initialized = true;
-    state.legacyEndKey = lastKey;
-    state.lastAssignedKey = lastKey;
-    if (lastKey && !state.selectedTaskId) state.selectedTaskId = LEGACY_ID;
-    return true;
+    const prompt = openPromptIndex(events);
+    const boundary = prompt >= 0 ? (prompt > 0 ? events[prompt - 1].key : null) : lastKey;
+    state.legacyEndKey = boundary;
+    state.lastAssignedKey = boundary;
+    if (boundary && !state.selectedTaskId && prompt < 0) state.selectedTaskId = LEGACY_ID;
+    if (prompt < 0) return true;
   }
+  const repaired = repairBootstrapSplit(state, events);
   let from = 0;
   if (state.lastAssignedKey) {
     const index = events.findIndex(e => e.key === state.lastAssignedKey);
     if (index === -1) return false; // transcript not fully read yet (or rewritten): wait.
     from = index + 1;
   }
-  if (from >= events.length) return false;
+  if (from >= events.length) return repaired;
   for (let i = from; i < events.length; i++) {
     const event = events[i];
     let task = state.tasks.find(t => t.id === state.activeTaskId);
