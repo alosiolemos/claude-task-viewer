@@ -2,7 +2,7 @@
   "name": "painel-execucao",
   "displayName": "Visualização Modular de Execução das Tarefas do Claude",
   "description": "Acompanhe em cartões conectados o que o Claude Code faz em cada tarefa, lendo as transcrições locais. Inspirado em visualizações de workflow como as do n8n; sem vínculo com o n8n.",
-  "version": "0.9.4",
+  "version": "0.10.0",
   "publisher": "aloisiolemos",
   "author": "Aloisio Lemos",
   "license": "MIT",

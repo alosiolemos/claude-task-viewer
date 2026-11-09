@@ -251,6 +251,14 @@ function commentView(comment: ActionComment | undefined): CommentView {
   return { label: 'COMENTÁRIO DO CLAUDE', text: comment.text, note: 'Texto público escrito pelo Claude nesta resposta. Não comprova o resultado.' };
 }
 
+/** Same labels and entry items shown in the details dock, for reuse outside the webview (export). */
+export function describeAction(event: TranscriptEvent): { title: string; what: string; filePath: string; entry: DetailItem[]; patch: string } {
+  const input = event.input || {};
+  const l = label(event.tool || '', event.result?.structured);
+  const filePath = FILE_TOOLS.has(event.tool || '') ? str(input.file_path) || str(input.notebook_path) : '';
+  return { title: l.title, what: l.what(input), filePath, entry: entryFor(event.tool || '', input, !!filePath), patch: patchOf(event.result?.structured) };
+}
+
 export function buildDetails(event: TranscriptEvent, comment?: ActionComment): ViewDetails {
   if (event.kind !== 'action') {
     const prompt = event.kind === 'prompt';

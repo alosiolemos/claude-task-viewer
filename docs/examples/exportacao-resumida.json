@@ -1,0 +1,49 @@
+{
+  "exemplo": true,
+  "descricao": "Demonstração reduzida inspirada em uma exportação real. Textos reescritos e dados genéricos; não é a transcrição original nem o esquema completo de exportação.",
+  "ferramenta": "Claude Task Viewer",
+  "versao": "0.10.0",
+  "tarefa": {
+    "titulo": "Melhorar a visualização e exportar uma tarefa",
+    "conversa": "Conversa de demonstração",
+    "projeto": "projeto-exemplo"
+  },
+  "resumo": [
+    "Identificar a conversa e o projeto de origem da tarefa.",
+    "Consultar o histórico sem mudar a tarefa que recebe novas ações.",
+    "Exportar um relatório da tarefa selecionada em HTML ou JSON."
+  ],
+  "etapas": [
+    {
+      "tipo": "pedido",
+      "descricao": "Solicitar melhorias na identificação, no histórico e na exportação."
+    },
+    {
+      "tipo": "leitura",
+      "descricao": "Consultar a implementação atual para entender o funcionamento."
+    },
+    {
+      "tipo": "edicao",
+      "descricao": "Ajustar a interface e acrescentar histórico e exportação."
+    },
+    {
+      "tipo": "verificacao",
+      "descricao": "Conferir o comportamento com testes e revisar a proteção de dados."
+    },
+    {
+      "tipo": "resposta",
+      "descricao": "Apresentar as alterações e indicar o que precisa de conferência no VS Code."
+    }
+  ],
+  "privacidade": {
+    "removidos": [
+      "Mensagens e comentários originais",
+      "Caminhos locais e nomes de arquivos pessoais",
+      "Identificadores de tarefa e sessão",
+      "Comandos, código e saídas completos",
+      "Credenciais e demais valores privados",
+      "Explicações completas do Gemini"
+    ]
+  },
+  "aviso": "Exemplo para entender o formato de um relatório. Não certifica a correção do código nem substitui a revisão dos dados antes de compartilhar."
+}

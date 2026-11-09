@@ -1,5 +1,14 @@
 # 📝 Changelog
 
+## [0.10.0] — 2026-11-09
+
+- Cabeçalho mostra a origem da tarefa exibida: **Conversa** (nome registrado na transcrição, com prioridade para o nome dado pelo usuário; sem nome, "Conversa sem título") e **Projeto · ID**.
+- Lista lateral reúne as tarefas já acompanhadas pelo painel em qualquer sessão, com busca e filtros por projeto (padrão: projeto atual; opção "Todos os projetos acompanhados") e conversa. Cada item mostra título, conversa, projeto, data e estado.
+- Identidade estável sessão + tarefa, sem duplicatas. Metadados pequenos por transcrição no armazenamento global do VS Code; as associações existentes não mudam e as transcrições não são copiadas.
+- Tarefas de outras sessões abrem em modo de consulta, somente leitura: não alteram a tarefa ativa nem as associações. Transcrição ausente preserva a identificação e informa que os detalhes estão indisponíveis.
+- Novo ícone **Exportar tarefa**: revisão do conteúdo com opção de ocultar categorias e termos, escolha entre HTML (relatório autocontido, sem scripts) e JSON, e janela nativa do VS Code para salvar. Cancelar não cria arquivo. A exportação não chama o Gemini; inclui apenas explicações já geradas na janela atual, identificadas como IA.
+- Exportação, correções após validação: valores de campos com nome de credencial (`password`, `apiKey`, `token`, `credentials.*`, `Authorization`…) são redigidos em objetos e em textos; ocultar entradas remove também descrição, arquivo e parâmetros da ação; resultados preservam espaços e quebras de linha exatamente como registrados.
+
 ## [0.9.4] — 2026-11-09
 
 - Primeira abertura mantém pedido em andamento, ações e resposta na mesma tarefa, com título derivado do pedido.

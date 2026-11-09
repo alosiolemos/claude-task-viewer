@@ -61,6 +61,7 @@ header { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; pad
 .session { min-width: 0; flex: 1 1 240px; }
 .session h1 { margin: 0; font-size: 1.1em; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .session p { margin: 2px 0 0; color: var(--muted); font-size: .92em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.session p + p { margin-top: 0; }
 .current { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; min-width: 0; flex: 0 1 auto; }
 .current .label { color: var(--muted); font-size: .92em; white-space: nowrap; }
 .current strong { font-weight: 600; max-width: 28ch; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -82,6 +83,25 @@ aside.history { background: var(--pane); border-right: 1px solid var(--line); ov
 .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); flex: none; }
 .dot.answered { background: var(--ok); } .dot.running { background: var(--warn); } .dot.no-reply { background: var(--muted); } .dot.legacy { background: transparent; border: 1px solid var(--muted); }
 .history .sep { margin: 10px 14px 4px; font-size: .82em; color: var(--muted); }
+.filters { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 5px 8px; align-items: center; padding: 0 14px 10px; border-bottom: 1px solid var(--line); font-size: .9em; color: var(--muted); }
+.filters input, .filters select { min-width: 0; width: 100%; font: inherit; color: var(--vscode-input-foreground, var(--fg)); background: var(--vscode-input-background, var(--bg)); border: 1px solid var(--vscode-input-border, var(--line)); border-radius: 2px; padding: 3px 6px; }
+.filters select { color: var(--vscode-dropdown-foreground, var(--fg)); background: var(--vscode-dropdown-background, var(--bg)); border-color: var(--vscode-dropdown-border, var(--line)); }
+.filters input { grid-column: 1 / -1; }
+.filters input:focus, .filters select:focus { outline: 1px solid var(--focus); outline-offset: -1px; }
+.task .origin { grid-column: 1 / -1; color: var(--muted); font-size: .88em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.task[aria-current="true"] .origin { color: inherit; opacity: .85; }
+.dot.unknown { background: transparent; border: 1px dashed var(--muted); } .dot.missing { background: var(--err); }
+.note.pad { padding: 10px 14px; }
+dialog.export { width: min(620px, 94vw); }
+dialog.export fieldset { border: 1px solid var(--line); border-radius: 4px; margin: 0; padding: 8px 12px 10px; display: grid; gap: 6px; min-width: 0; }
+dialog.export legend { padding: 0 4px; font-weight: 600; }
+dialog.export label.opt { display: flex; gap: 8px; align-items: flex-start; overflow-wrap: anywhere; }
+dialog.export label.opt input { margin-top: 3px; flex: none; }
+dialog.export label.opt.off { color: var(--muted); }
+dialog.export textarea { width: 100%; font: inherit; color: var(--vscode-input-foreground, var(--fg)); background: var(--vscode-input-background, var(--bg)); border: 1px solid var(--vscode-input-border, var(--line)); border-radius: 2px; padding: 4px 6px; resize: vertical; }
+dialog.export .ident { margin: 0; overflow-wrap: anywhere; }
+dialog.export .dlg-foot { gap: 8px; }
+dialog.export .dlg-sec { max-height: min(70vh, 640px); overflow: auto; }
 
 main.stage { position: relative; display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; min-height: 0; min-width: 0; }
 .toolbar { display: flex; align-items: center; gap: 4px; padding: 6px 10px; border-bottom: 1px solid var(--line); min-width: 0; }
@@ -262,6 +282,7 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
   <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
   <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/></symbol>
   <symbol id="i-sidebar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></symbol>
   <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v5.5M12 7.6h.01"/></symbol>
   <linearGradient id="gemini-grad" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#4285F4"/><stop offset="1" stop-color="#1A73E8"/></linearGradient>
   <symbol id="logo-gemini" viewBox="0 0 24 24"><path fill="url(#gemini-grad)" d="M12 2C12.6 7.5 16.5 11.4 22 12C16.5 12.6 12.6 16.5 12 22C11.4 16.5 7.5 12.6 2 12C7.5 11.4 11.4 7.5 12 2Z"/></symbol>
@@ -270,16 +291,23 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
 
 <div class="app">
   <header>
-    <div class="session"><h1 id="productName" tabindex="0" aria-keyshortcuts="F2">Carregando tarefa…</h1><p id="sessionLine">ID: —</p></div>
+    <div class="session"><h1 id="productName" tabindex="0" aria-keyshortcuts="F2">Carregando tarefa…</h1><p id="originLine">Conversa: —</p><p id="sessionLine">Projeto: — · ID: —</p></div>
     <div class="header-actions" id="current">
       <button class="icon-btn" id="chooseSession" aria-label="Trocar sessão"><svg class="i"><use href="#i-swap"/></svg></button>
       <button class="icon-btn" id="explainTask" aria-label="Explicar tarefa inteira com Gemini" disabled><svg class="brand" aria-hidden="true"><use href="#logo-gemini"/></svg></button>
+      <button class="icon-btn" id="exportTask" aria-label="Exportar tarefa" aria-haspopup="dialog" disabled><svg class="i"><use href="#i-download"/></svg></button>
       <button class="icon-btn" id="settingsButton" aria-label="Configurações"><svg class="i"><use href="#i-gear"/></svg></button>
       <button class="icon-btn" id="newTaskButton" aria-label="Nova tarefa"><svg class="i"><use href="#i-plus"/></svg></button>
     </div>
   </header>
   <div class="body">
-    <aside class="history" id="taskPane" aria-label="Histórico de tarefas"><h2>Tarefas</h2><div id="tasks"></div></aside>
+    <aside class="history" id="taskPane" aria-label="Histórico de tarefas"><h2>Tarefas</h2>
+      <div class="filters">
+        <input id="taskSearch" type="search" placeholder="Buscar tarefa, conversa ou ID" aria-label="Buscar tarefas" autocomplete="off">
+        <label for="projectFilter">Projeto</label><select id="projectFilter"></select>
+        <label for="conversationFilter">Conversa</label><select id="conversationFilter"></select>
+      </div>
+      <div id="tasks"></div></aside>
     <main class="stage">
       <div>
         <div class="toolbar">
@@ -336,6 +364,37 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
   </form>
 </dialog>
 
+<dialog class="settings export" id="exportDialog" aria-labelledby="exportTitle">
+  <form method="dialog">
+    <header class="dock-head">
+      <h2 id="exportTitle">Exportar tarefa</h2>
+      <button class="icon-btn" value="close" aria-label="Fechar exportação" title="Fechar"><svg class="i"><use href="#i-close"/></svg></button>
+    </header>
+    <section class="dlg-sec">
+      <p class="ident" id="exportIdent"></p>
+      <fieldset>
+        <legend>Formato</legend>
+        <label class="opt"><input type="radio" name="exportFormat" value="html" checked><span><strong>HTML</strong> — relatório visual e independente, que abre no navegador.</span></label>
+        <label class="opt"><input type="radio" name="exportFormat" value="json"><span><strong>JSON</strong> — registros estruturados para análise técnica.</span></label>
+      </fieldset>
+      <fieldset>
+        <legend>Revise o que será incluído</legend>
+        <p class="note">Sempre incluídos: título, ID, conversa, projeto, sequência e estado das ações, data da exportação e versão da ferramenta. Desmarque o que não deve sair no arquivo.</p>
+        <div id="exportItems"><p class="note">Preparando a revisão…</p></div>
+      </fieldset>
+      <label for="exportTerms">Ocultar também estes termos (um por linha)</label>
+      <textarea id="exportTerms" rows="3" placeholder="Ex.: nome de cliente, servidor interno"></textarea>
+      <div id="exportNotes"></div>
+      <p class="note">Nunca são incluídos: a chave do Gemini e o raciocínio interno. Valores com aparência de credencial são substituídos automaticamente. A sanitização não garante remover toda informação confidencial; revise o arquivo antes de compartilhar.</p>
+      <p class="note" id="exportStatus" role="status"></p>
+    </section>
+    <footer class="dlg-foot">
+      <button class="btn" value="close">Cancelar</button>
+      <button type="button" class="btn primary" id="exportSave" disabled>Escolher local e salvar…</button>
+    </footer>
+  </form>
+</dialog>
+
 <script nonce="{{NONCE}}">
 (() => {
   const vscode = typeof acquireVsCodeApi === 'function' ? acquireVsCodeApi() : null;
@@ -351,6 +410,8 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
     dock: Object.assign({ h: 300, collapsed: false }, persisted.dock || {}),
     open: persisted.open || {},
     tasksHidden: !!persisted.tasksHidden,
+    filter: Object.assign({ project: 'current', conversation: '', q: '' }, persisted.filter || {}),
+    exportRef: null, exportPreview: null,
     detailsKey: null, detailsSig: '', detailsJson: '', details: null,
     explain: {},
     taskExplain: {}, taskMode: null, taskRenderSig: '',
@@ -359,7 +420,7 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
     knownKeys: new Set(),
     bounds: null,
   };
-  const save = () => vscode && vscode.setState({ views: ui.views, selectedNode: ui.selectedNode, dock: ui.dock, open: ui.open, tasksHidden: ui.tasksHidden });
+  const save = () => vscode && vscode.setState({ views: ui.views, selectedNode: ui.selectedNode, dock: ui.dock, open: ui.open, tasksHidden: ui.tasksHidden, filter: ui.filter });
   const SVG_NS = 'http://www.w3.org/2000/svg';
   // Open/closed choice per step and section. Defaults apply only while the user has not chosen.
   function openState(stepKey, id, dflt) {
@@ -418,35 +479,48 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
   }
   const fmtTime = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }); };
   const fmtWhen = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); };
-  const STATE = { answered: 'Respondida', running: 'Em andamento', 'no-reply': 'Sem resposta final', empty: 'Aguardando ações', legacy: 'Antes do painel' };
+  const STATE = { answered: 'Respondida', running: 'Em andamento', 'no-reply': 'Sem resposta final', empty: 'Aguardando ações', legacy: 'Antes do painel', unknown: 'Estado ainda não verificado' };
+  const fmtDay = iso => { const d = new Date(iso); if (!iso || isNaN(d)) return ''; const sameYear = d.getFullYear() === new Date().getFullYear(); return d.toLocaleDateString('pt-BR', sameYear ? { day: '2-digit', month: '2-digit' } : { day: '2-digit', month: '2-digit', year: '2-digit' }) + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); };
   const STATUS = { ok: ['check', 'Concluída'], error: ['x', 'Erro registrado'], pending: ['clock', 'Sem resultado ainda'] };
   const nodeSig = n => [n.title, n.subtitle, n.status, n.time].join('|');
 
-  function view(taskId) {
-    if (!ui.views[taskId]) ui.views[taskId] = { x: 0, y: 0, k: 1, follow: true, showAll: false };
-    return ui.views[taskId];
+  // Stable reference of the shown task (session|task); older payloads only carry the task id.
+  const vid = p => p ? (p.selectedRef || p.selectedTaskId) : null;
+  function view(id) {
+    if (!ui.views[id]) {
+      const old = typeof id === 'string' && id.includes('|') ? ui.views[id.split('|').pop()] : null;
+      ui.views[id] = old && !id.endsWith('|legado') ? Object.assign({}, old) : { x: 0, y: 0, k: 1, follow: true, showAll: false };
+    }
+    return ui.views[id];
   }
 
   // ---------- header, settings and history ----------
   function renderHeader(p) {
     const selected = p.tasks.find(t => t.id === p.selectedTaskId);
     $('productName').textContent = selected ? selected.title : 'Selecione uma tarefa';
-    $('productName').title = selected && !selected.legacy ? 'Duplo clique ou F2 para renomear esta tarefa' : 'Tarefa exibida';
-    const uuid = selected && /^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(selected.id);
-    $('sessionLine').textContent = (uuid ? 'UUID: ' : 'ID: ') + (selected ? selected.id : '—');
-    $('sessionLine').title = selected ? selected.id : '';
+    $('productName').title = selected && !selected.legacy && !p.viewingOther ? 'Duplo clique ou F2 para renomear esta tarefa' : 'Tarefa exibida';
+    // Origin of the shown task: the conversation name comes from the transcript, never from the task title.
+    const o = p.origin || { conversation: p.sessionTitle || '', project: '' };
+    const conversation = (o.conversation || '').trim() || 'Conversa sem título';
+    const id = selected ? selected.id : (o.taskId || '—');
+    $('originLine').textContent = 'Conversa: ' + conversation;
+    $('originLine').title = 'Conversa: ' + conversation;
+    $('sessionLine').textContent = 'Projeto: ' + ((o.project || '').trim() || 'Projeto não identificado') + ' · ID: ' + id;
+    $('sessionLine').title = $('sessionLine').textContent;
     $('explainTask').disabled = !p.taskSummaryMeta || !selected || selected.legacy;
+    $('exportTask').disabled = !p.selectedTaskId;
     $('chooseSession').setAttribute('aria-description', 'Sessão selecionada: ' + (p.transcriptFile || 'nenhuma'));
   }
   function renameSelectedTask() {
     const p=ui.payload; const t=p && p.tasks.find(t=>t.id===p.selectedTaskId);
-    if(t && !t.legacy) post({command:'renameTask',taskId:t.id});
+    if(t && !t.legacy && !p.viewingOther) post({command:'renameTask',taskId:t.id});
   }
   $('productName').addEventListener('dblclick',renameSelectedTask);
   $('productName').addEventListener('keydown',ev=>{if(ev.key==='F2'){ev.preventDefault();renameSelectedTask();}});
   $('settingsButton').addEventListener('click',openSettings);
   $('newTaskButton').addEventListener('click',()=>post({command:'newTask'}));
   $('explainTask').addEventListener('click',openTaskExplanation);
+  $('exportTask').addEventListener('click',openExport);
 
   function openSettings() {
     renderGeminiStatus();
@@ -463,32 +537,80 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
   $('geminiSet').addEventListener('click', () => post({ command: 'geminiSet' }));
   $('geminiRemove').addEventListener('click', () => post({ command: 'geminiRemove' }));
 
+  // Tasks followed by the panel in any session. Older payloads (tests) only carry the current session's tasks.
+  function historyOf(p) {
+    if (Array.isArray(p.history)) return p.history;
+    return p.tasks.map(t => ({ ref: t.id, taskId: t.id, title: t.title, conversation: p.sessionTitle || '', project: '', projectKey: '', sessionId: '', time: t.lastTime || t.firstTime, state: t.state, actions: t.actions, failures: t.failures, legacy: t.legacy, available: true, local: true, active: t.active }));
+  }
+  const conversationName = e => (e.conversation || '').trim() || 'Conversa sem título';
+  function setOptions(select, options, value) {
+    const sig = JSON.stringify(options);
+    if (select.dataset.sig !== sig) {
+      select.dataset.sig = sig;
+      select.replaceChildren(...options.map(([v, label]) => { const o = el('option', '', label); o.value = v; return o; }));
+    }
+    select.value = options.some(([v]) => v === value) ? value : options[0][0];
+    return select.value;
+  }
   function renderTasks(p) {
     const box = $('tasks');
+    const all = historyOf(p);
+    const f = ui.filter;
+    const currentKey = p.currentProjectKey || '';
+    const currentName = (all.find(e => e.projectKey && e.projectKey === currentKey) || {}).project || (p.origin && !p.viewingOther && p.origin.project) || 'Projeto atual';
+    const projects = new Map();
+    for (const e of all) if (e.projectKey && e.projectKey !== currentKey && !projects.has(e.projectKey)) projects.set(e.projectKey, e.project || e.projectKey);
+    const projectOptions = [['current', currentName + ' (atual)'], ['all', 'Todos os projetos acompanhados'], ...[...projects].sort((a, b) => a[1].localeCompare(b[1], 'pt-BR')).map(([k, n]) => [k, n])];
+    f.project = setOptions($('projectFilter'), projectOptions, f.project);
+    const inProject = all.filter(e => !e.projectKey || f.project === 'all' || (f.project === 'current' ? e.projectKey === currentKey : e.projectKey === f.project));
+    const conversations = new Map();
+    for (const e of inProject) if (e.sessionId && !conversations.has(e.sessionId)) conversations.set(e.sessionId, conversationName(e));
+    const names = [...conversations.values()];
+    const convOptions = [['', 'Todas as conversas'], ...[...conversations].map(([id, n]) => [id, names.filter(x => x === n).length > 1 ? n + ' (' + id.slice(0, 8) + ')' : n])];
+    f.conversation = setOptions($('conversationFilter'), convOptions, f.conversation);
+    $('conversationFilter').disabled = convOptions.length <= 2 && !f.conversation;
+    const q = f.q.trim().toLowerCase();
+    const list = inProject.filter(e => (!f.conversation || e.sessionId === f.conversation) &&
+      (!q || [e.title, conversationName(e), e.project, e.taskId].some(v => String(v || '').toLowerCase().includes(q))));
+    const selectedRef = vid(p);
+    const activeRef = p.activeRef !== undefined ? p.activeRef : null;
     box.replaceChildren();
-    if (!p.tasks.length) { box.append(el('p', 'note', 'Nenhuma tarefa ainda.')); return; }
+    if (!all.length) { box.append(el('p', 'note pad', 'Nenhuma tarefa ainda.')); return; }
+    if (!list.length) { box.append(el('p', 'note pad', 'Nenhuma tarefa encontrada com estes filtros.')); return; }
     let legacyShown = false;
-    for (const t of p.tasks) {
-      if (t.legacy && !legacyShown) { box.append(el('div', 'sep', 'Histórico legado')); legacyShown = true; }
+    for (const e of list) {
+      if (e.legacy && !legacyShown) { box.append(el('div', 'sep', 'Histórico legado')); legacyShown = true; }
       const b = el('button', 'task');
-      b.setAttribute('aria-current', String(t.id === p.selectedTaskId));
-      const title = el('span', 't', t.title); title.title = t.title;
-      b.append(title, el('span', 'when', fmtWhen(t.lastTime || t.firstTime)));
+      b.setAttribute('aria-current', String(e.ref === selectedRef));
+      const title = el('span', 't', e.title); title.title = e.title;
+      b.append(title, el('span', 'when', fmtDay(e.time)));
+      const origin = el('span', 'origin', conversationName(e) + (e.project ? ' · ' + e.project : ''));
+      origin.title = 'Conversa: ' + conversationName(e) + (e.project ? '\nProjeto: ' + e.project : '');
       const meta = el('span', 'meta');
-      meta.append(el('span', 'dot ' + t.state), document.createTextNode(STATE[t.state] + ' · ' + t.actions + (t.actions === 1 ? ' ação' : ' ações') + (t.failures ? ' · ' + t.failures + (t.failures === 1 ? ' com erro' : ' com erro') : '')));
-      b.append(meta);
-      if (t.active) b.append(el('span', 'receiving', 'Recebendo as próximas ações'));
-      b.addEventListener('click', () => post({ command: 'selectTask', taskId: t.id }));
+      const stateLabel = e.available === false ? 'Transcrição indisponível' : STATE[e.state] || STATE.unknown;
+      meta.append(el('span', 'dot ' + (e.available === false ? 'missing' : e.state)), document.createTextNode(stateLabel + (e.state === 'unknown' || e.available === false ? '' : ' · ' + e.actions + (e.actions === 1 ? ' ação' : ' ações') + (e.failures ? ' · ' + e.failures + ' com erro' : ''))));
+      b.append(origin, meta);
+      if (e.local ? e.active : e.ref === activeRef) b.append(el('span', 'receiving', 'Recebendo as próximas ações'));
+      b.setAttribute('aria-label', e.title + '. Conversa: ' + conversationName(e) + (e.project ? '. Projeto: ' + e.project : '') + '. ' + stateLabel + (e.time ? '. ' + fmtDay(e.time) : ''));
+      b.addEventListener('click', () => post(e.local ? { command: 'selectTask', taskId: e.taskId } : { command: 'selectTask', taskId: e.taskId, ref: e.ref }));
       box.append(b);
     }
   }
+  $('taskSearch').addEventListener('input', () => { ui.filter.q = $('taskSearch').value; save(); if (ui.payload) renderTasks(ui.payload); });
+  $('projectFilter').addEventListener('change', () => { ui.filter.project = $('projectFilter').value; ui.filter.conversation = ''; save(); if (ui.payload) renderTasks(ui.payload); });
+  $('conversationFilter').addEventListener('change', () => { ui.filter.conversation = $('conversationFilter').value; save(); if (ui.payload) renderTasks(ui.payload); });
 
   function renderBanners(p) {
     const box = $('banners');
     box.replaceChildren();
     for (const w of p.warnings || []) box.append(el('div', 'banner', w));
     const selected=p.tasks.find(t=>t.id===p.selectedTaskId);
-    if(selected && !selected.legacy && selected.id!==p.activeTaskId) {
+    if(p.viewingOther) {
+      const target=p.activeTitle ? '“'+p.activeTitle+'”'+(p.activeConversation ? ' (conversa '+p.activeConversation+')' : '') : 'a tarefa ativa da sessão acompanhada';
+      const notice=el('div','banner','Consultando uma tarefa de outra conversa. As novas ações continuam em '+target+'.');
+      if(p.activeRef) notice.append(button('btn','Voltar à tarefa ativa',null,()=>post({command:'selectTask',ref:p.activeRef,taskId:''})));
+      box.append(notice);
+    } else if(selected && !selected.legacy && selected.id!==p.activeTaskId) {
       const notice=el('div','banner','Consultando histórico. As próximas ações continuam na tarefa ativa.');
       notice.append(button('btn','Continuar esta tarefa',null,()=>post({command:'continueTask',taskId:selected.id})));
       box.append(notice);
@@ -514,7 +636,7 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
   const rowY = j => TOP + j * (H + GY);
 
   function renderCanvas(p) {
-    const taskId = p.selectedTaskId;
+    const taskId = vid(p);
     const world = $('world'), edges = $('edges'), empty = $('empty');
     const nodes = p.nodes || [];
     const v = taskId ? view(taskId) : null;
@@ -530,6 +652,10 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
         box.append(el('br'), el('br'), button('btn primary', 'Escolher pasta de transcrições', null, () => post({ command: 'chooseFolder' })));
       } else if (!taskId) {
         box.append(el('strong', '', 'Nenhuma tarefa selecionada'), el('span', '', 'Quando o Claude agir neste projeto, as ações aparecem aqui automaticamente.'));
+      } else if (p.origin && p.origin.available === false) {
+        box.append(el('strong', '', 'Detalhes indisponíveis'), el('span', '', 'A transcrição original desta tarefa não foi encontrada. A identificação continua no histórico.'));
+      } else if (p.viewingOther) {
+        box.append(el('strong', '', 'Nenhuma ação registrada nesta tarefa'), el('span', '', 'Esta tarefa pertence a outra conversa e está aberta apenas para consulta.'));
       } else {
         box.append(el('strong', '', 'Aguardando ações nesta tarefa'), el('span', '', 'As próximas ações do Claude aparecerão aqui sem recarregar o painel.'));
       }
@@ -606,7 +732,7 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
     for (const [key, card] of ui.rendered) if (!keep.has(key)) { card.remove(); ui.rendered.delete(key); }
     let earlier = world.querySelector('.earlier');
     if (first > 0) {
-      if (!earlier) { earlier = button('btn earlier', '', null, () => { view(p.selectedTaskId).showAll = true; save(); render(); }); world.appendChild(earlier); }
+      if (!earlier) { earlier = button('btn earlier', '', null, () => { view(vid(p)).showAll = true; save(); render(); }); world.appendChild(earlier); }
       earlier.textContent = 'Mostrar ' + first + ' etapa(s) anteriores';
       earlier.style.left = (colX(first) - 200) + 'px';
       earlier.style.top = (rowY(0) + H / 2 - 13) + 'px';
@@ -622,7 +748,7 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
 
   function applyView() {
     const p = ui.payload; if (!p || !p.selectedTaskId) return;
-    const v = view(p.selectedTaskId);
+    const v = view(vid(p));
     $('world').style.transform = `translate(${v.x}px, ${v.y}px) scale(${v.k})`;
   }
   function followLatest(v) {
@@ -634,7 +760,7 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
   }
   function fit() {
     const p = ui.payload; if (!p || !p.selectedTaskId || !ui.bounds) return;
-    const v = view(p.selectedTaskId);
+    const v = view(vid(p));
     const vp = $('viewport').getBoundingClientRect();
     const w = ui.bounds.x1 - ui.bounds.x0 + 2 * PAD, h = ui.bounds.y1 - ui.bounds.y0 + 2 * PAD;
     v.k = Math.max(0.2, Math.min(1.25, Math.min(vp.width / w, vp.height / h)));
@@ -645,7 +771,7 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
   }
   function zoomAt(factor, cx, cy) {
     const p = ui.payload; if (!p || !p.selectedTaskId) return;
-    const v = view(p.selectedTaskId);
+    const v = view(vid(p));
     const k = Math.max(0.2, Math.min(2, v.k * factor));
     v.x = cx - (cx - v.x) * (k / v.k);
     v.y = cy - (cy - v.y) * (k / v.k);
@@ -659,14 +785,14 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
   let drag = null;
   viewport.addEventListener('pointerdown', ev => {
     if (ev.target.closest('.node, .btn') || !ui.payload || !ui.payload.selectedTaskId) return;
-    const v = view(ui.payload.selectedTaskId);
+    const v = view(vid(ui.payload));
     drag = { sx: ev.clientX, sy: ev.clientY, x: v.x, y: v.y, moved: false };
     viewport.setPointerCapture(ev.pointerId);
     viewport.classList.add('dragging');
   });
   viewport.addEventListener('pointermove', ev => {
     if (!drag) return;
-    const v = view(ui.payload.selectedTaskId);
+    const v = view(vid(ui.payload));
     v.x = drag.x + ev.clientX - drag.sx; v.y = drag.y + ev.clientY - drag.sy;
     if (Math.abs(ev.clientX - drag.sx) + Math.abs(ev.clientY - drag.sy) > 3) { drag.moved = true; v.follow = false; }
     applyView();
@@ -677,7 +803,7 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
     ev.preventDefault();
     const rect = viewport.getBoundingClientRect();
     if (ev.ctrlKey) { zoomAt(ev.deltaY < 0 ? 1.1 : 1 / 1.1, ev.clientX - rect.left, ev.clientY - rect.top); return; }
-    const v = view(ui.payload.selectedTaskId);
+    const v = view(vid(ui.payload));
     const d = Math.abs(ev.deltaX) > Math.abs(ev.deltaY) ? ev.deltaX : ev.deltaY;
     if (ev.shiftKey) v.y -= d; else v.x -= d;
     v.follow = false;
@@ -686,7 +812,7 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
   $('fit').addEventListener('click', fit);
   $('zoomIn').addEventListener('click', () => { const r = viewport.getBoundingClientRect(); zoomAt(1.2, r.width / 2, r.height / 2); });
   $('zoomOut').addEventListener('click', () => { const r = viewport.getBoundingClientRect(); zoomAt(1 / 1.2, r.width / 2, r.height / 2); });
-  $('latest').addEventListener('click', () => { if (!ui.payload || !ui.payload.selectedTaskId) return; const v = view(ui.payload.selectedTaskId); v.follow = true; followLatest(v); applyView(); save(); });
+  $('latest').addEventListener('click', () => { if (!ui.payload || !ui.payload.selectedTaskId) return; const v = view(vid(ui.payload)); v.follow = true; followLatest(v); applyView(); save(); });
   $('chooseSession').addEventListener('click', () => post({ command: 'chooseTranscript' }));
   // When the dock opens, resizes or the window changes, keep the visible centre of the flow in place.
   let lastViewport = null;
@@ -695,7 +821,7 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
     const size = { w: r.width, h: r.height };
     const p = ui.payload;
     if (lastViewport && p && p.selectedTaskId) {
-      const v = view(p.selectedTaskId);
+      const v = view(vid(p));
       if (v.follow) followLatest(v);
       else { v.x += (size.w - lastViewport.w) / 2; v.y += (size.h - lastViewport.h) / 2; }
       applyView(); save();
@@ -707,7 +833,7 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
   function selectNode(key) {
     ui.taskMode=null; ui.taskRenderSig='';
     const p = ui.payload; if (!p || !p.selectedTaskId) return;
-    ui.selectedNode[p.selectedTaskId] = key;
+    ui.selectedNode[vid(p)] = key;
     save();
     for (const [k, card] of ui.rendered) card.setAttribute('aria-pressed', String(k === key));
     syncDock(true);
@@ -715,7 +841,7 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
   function closeDock() {
     ui.taskMode=null; ui.taskRenderSig='';
     const p = ui.payload;
-    if (p && p.selectedTaskId) delete ui.selectedNode[p.selectedTaskId];
+    if (p && p.selectedTaskId) delete ui.selectedNode[vid(p)];
     save();
     for (const [, card] of ui.rendered) card.setAttribute('aria-pressed', 'false');
     syncDock(false);
@@ -724,7 +850,7 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
   function syncDock(force) {
     if(ui.taskMode){renderTaskExplanation();return;}
     const p = ui.payload;
-    const key = p && p.selectedTaskId ? ui.selectedNode[p.selectedTaskId] : null;
+    const key = p && p.selectedTaskId ? ui.selectedNode[vid(p)] : null;
     $('dock').hidden = !key;
     if (!key) { ui.detailsKey = null; ui.detailsSig = ''; ui.detailsJson = ''; ui.details = null; $('dockBody').replaceChildren(); return; }
     const node = (p.nodes || []).find(n => n.key === key);
@@ -907,7 +1033,7 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
   function renderDetails(d) {
     if(ui.taskMode)return;
     const p = ui.payload;
-    const key = p && p.selectedTaskId ? ui.selectedNode[p.selectedTaskId] : null;
+    const key = p && p.selectedTaskId ? ui.selectedNode[vid(p)] : null;
     if (!d || !key || d.key !== key) return;
     const json = JSON.stringify(d);
     if (json === ui.detailsJson && ui.detailsKey === key) { renderExplain(); return; }
@@ -1104,6 +1230,67 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
     body.replaceChildren(box);body.scrollTop=keep;
   }
 
+  // ---------- export of the selected task (review first; the file is written only after the native save dialog) ----------
+  const EXPORT_ITEMS = [
+    ['prompts', 'Pedidos do usuário', pv => pv.counts.prompts, ['pedido', 'pedidos']],
+    ['replies', 'Respostas do Claude', pv => pv.counts.replies, ['resposta', 'respostas']],
+    ['inputs', 'Entradas das ações (comandos, descrições, arquivos, trechos e parâmetros)', pv => pv.inputs, ['ação', 'ações']],
+    ['results', 'Resultados e mensagens de erro', pv => pv.results, ['resultado', 'resultados']],
+    ['comments', 'Comentários públicos do Claude', pv => pv.counts.comments, ['comentário', 'comentários']],
+    ['gemini', 'Explicações do Gemini (geradas por IA)', pv => pv.counts.geminiSteps + (pv.counts.geminiTask ? 1 : 0), ['explicação', 'explicações']],
+  ];
+  function openExport() {
+    if (!ui.payload || !ui.payload.selectedTaskId) return;
+    $('exportStatus').textContent = '';
+    if (!$('exportDialog').open) $('exportDialog').showModal();
+    requestExportPreview();
+  }
+  function requestExportPreview() {
+    ui.exportRef = vid(ui.payload); ui.exportPreview = null;
+    $('exportSave').disabled = true;
+    $('exportItems').replaceChildren(el('p', 'note', 'Preparando a revisão…'));
+    post({ command: 'exportPreview' });
+  }
+  function renderExportPreview(m) {
+    const items = $('exportItems'), notes = $('exportNotes');
+    notes.replaceChildren();
+    if (!m.preview) { ui.exportPreview = null; items.replaceChildren(el('p', 'note', m.error || 'Não há tarefa para exportar.')); $('exportSave').disabled = true; return; }
+    const pv = m.preview;
+    ui.exportRef = m.ref; ui.exportPreview = pv;
+    $('exportIdent').textContent = 'Tarefa: ' + pv.title + ' · Conversa: ' + ((pv.conversation || '').trim() || 'Conversa sem título') + ' · Projeto: ' + (pv.project || 'não identificado') + ' · ID: ' + pv.taskId;
+    const rows = EXPORT_ITEMS.map(([id, label, count, words]) => {
+      const n = count(pv);
+      const row = el('label', 'opt' + (n ? '' : ' off'));
+      const box = el('input'); box.type = 'checkbox'; box.name = 'exportInclude'; box.value = id; box.checked = n > 0; box.disabled = !n;
+      const extra = id === 'results' && pv.counts.errors ? ' · ' + pv.counts.errors + (pv.counts.errors === 1 ? ' erro' : ' erros') : '';
+      row.append(box, el('span', '', label + ' — ' + (n ? n + ' ' + (n === 1 ? words[0] : words[1]) + extra : id === 'gemini' ? 'nenhuma disponível; a exportação não chama o Gemini' : 'nenhum registro')));
+      return row;
+    });
+    items.replaceChildren(...rows);
+    if (!pv.transcriptAvailable) notes.append(el('p', 'note', 'A transcrição original não está disponível: o arquivo terá apenas a identificação da tarefa e o aviso de indisponibilidade.'));
+    if (pv.counts.pending) notes.append(el('p', 'note', pv.counts.pending + (pv.counts.pending === 1 ? ' ação ainda não tem resultado registrado.' : ' ações ainda não têm resultado registrado.')));
+    if (pv.automaticReplacements) notes.append(el('p', 'note', pv.automaticReplacements + (pv.automaticReplacements === 1 ? ' valor com aparência de credencial será substituído' : ' valores com aparência de credencial serão substituídos') + ' automaticamente.'));
+    $('exportSave').disabled = false;
+  }
+  function renderExportResult(m) {
+    const status = $('exportStatus');
+    $('exportSave').disabled = !ui.exportPreview;
+    if (m.status === 'saved') { status.textContent = 'Arquivo salvo: ' + m.name; $('exportDialog').close(); }
+    else if (m.status === 'cancelled') status.textContent = 'Exportação cancelada. Nenhum arquivo foi criado.';
+    else if (m.status === 'changed') { status.textContent = m.message || 'A tarefa selecionada mudou.'; requestExportPreview(); }
+    else status.textContent = m.message || 'Não foi possível exportar.';
+  }
+  $('exportSave').addEventListener('click', () => {
+    if (!ui.exportPreview || !ui.exportRef) return;
+    const format = (document.querySelector('input[name="exportFormat"]:checked') || {}).value === 'json' ? 'json' : 'html';
+    const hide = {};
+    for (const box of document.querySelectorAll('input[name="exportInclude"]')) hide[box.value] = !box.checked;
+    const terms = $('exportTerms').value.split('\n').map(t => t.trim()).filter(Boolean);
+    $('exportSave').disabled = true;
+    $('exportStatus').textContent = 'Escolha onde salvar na janela do VS Code…';
+    post({ command: 'exportSave', ref: ui.exportRef, format, hide, terms });
+  });
+
   // ---------- main ----------
   function render() {
     const p = ui.payload; if (!p) return;
@@ -1115,15 +1302,20 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
     const m = event.data;
     if (!m || typeof m !== 'object') return;
     if (m.command === 'payload' && m.payload) {
-      const previousTask = ui.payload && ui.payload.selectedTaskId;
+      const previousTask = vid(ui.payload);
       ui.payload = m.payload;
-      if (previousTask !== m.payload.selectedTaskId) {
+      if (previousTask !== vid(m.payload)) {
         ui.taskMode=null;ui.taskRenderSig='';
         for (const [, card] of ui.rendered) card.remove();
         ui.rendered.clear(); ui.knownKeys = new Set();
         ui.detailsSig = '';
       }
       render();
+      if ($('exportDialog').open && ui.exportRef !== vid(m.payload)) requestExportPreview();
+    } else if (m.command === 'exportPreview') {
+      renderExportPreview(m);
+    } else if (m.command === 'exportResult') {
+      renderExportResult(m);
     } else if (m.command === 'task-explanation' && typeof m.scope==='string') {
       ui.taskExplain[m.scope]={revision:m.revision,status:m.status,text:m.text,message:m.message,meta:m.meta || (ui.taskExplain[m.scope] && ui.taskExplain[m.scope].meta)};
       if(ui.taskMode===m.scope)renderTaskExplanation();
@@ -1153,6 +1345,7 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
     save();
   });
   applyTasksPane();
+  $('taskSearch').value = ui.filter.q;
   post({ command: 'ready' });
   window.__painel = { ui, fit };
 })();

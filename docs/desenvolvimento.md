@@ -13,6 +13,8 @@ extension/src/
   view.ts               Dados apresentados ao usuário
   gemini.ts             Contexto sanitizado e chamada opcional ao Gemini
   task-summary.ts       Contexto restrito à tarefa, limites e validação do resumo
+  history.ts            Metadados por transcrição e histórico entre sessões
+  export.ts             Exportação da tarefa selecionada em HTML e JSON
 extension/webview/
   painel.html           HTML, CSS, JavaScript e conectores SVG
 scripts/
@@ -61,7 +63,7 @@ Testes que consultam transcrições reais são opcionais e locais: nunca inclua 
 - Não persista uma segunda cópia completa da conversa apenas para renderizar a interface.
 - O nome público do repositório pode mudar sem mudar `name`, `publisher` e as chaves internas de configuração da extensão.
 
-Exportação para auditoria, suporte completo a subagentes e novos assistentes ficam fora da versão atual. Contribuições devem preservar simplicidade, leitura local e uma instalação pronta para quem não programa.
+Suporte completo a subagentes e novos assistentes ficam fora da versão atual. A exportação (0.10.0) usa somente registros locais e explicações já geradas; não chama o Gemini. Contribuições devem preservar simplicidade, leitura local e uma instalação pronta para quem não programa.
 
 ## Limpeza da versão 0.9.4
 

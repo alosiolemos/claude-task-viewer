@@ -55,7 +55,12 @@ export interface ActionComment {
 
 export class TranscriptModel {
   events: TranscriptEvent[] = [];
+  /** Conversation name recorded by Claude Code: a user-given name wins over the generated one. */
   title = '';
+  aiTitle = '';
+  customTitle = '';
+  /** Working folder recorded in the transcript (first seen), used only to name the project. */
+  cwd = '';
   private byKey = new Map<string, TranscriptEvent>();
   private seenRecords = new Set<string>();
   private orphanResults = new Map<string, ToolResult>();
@@ -105,7 +110,9 @@ export class TranscriptModel {
       this.records++;
       const type = String(record.type ?? '');
       if (!KNOWN_TYPES.has(type)) { this.unknown.add(type || '(sem tipo)'); continue; }
-      if (type === 'ai-title' && typeof record.aiTitle === 'string') { this.title = record.aiTitle; continue; }
+      if (!this.cwd && typeof record.cwd === 'string') this.cwd = record.cwd;
+      if (type === 'ai-title' && typeof record.aiTitle === 'string') { this.aiTitle = record.aiTitle; this.title = this.customTitle || this.aiTitle; continue; }
+      if (type === 'custom-title' && typeof record.customTitle === 'string') { this.customTitle = record.customTitle.trim(); this.title = this.customTitle || this.aiTitle; continue; }
       if (type !== 'user' && type !== 'assistant') continue;
       if (!isObject(record.message)) continue;
       this.conversational++;

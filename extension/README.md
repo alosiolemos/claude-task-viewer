@@ -1,9 +1,9 @@
-# Visualização Modular de Execução das Tarefas do Claude — 0.9.4
+# Visualização Modular de Execução das Tarefas do Claude — 0.10.0
 
 Mostra, em cartões conectados dentro do VS Code, o que o Claude Code fez em cada tarefa: pedidos, leituras, edições, comandos, erros e respostas. Inspirada em visualizações de workflow como as do n8n, sem vínculo com o n8n.
 
 ## Instalar e abrir
-1. Extensões › … › Instalar a partir do VSIX › `painel-execucao-0.9.4.vsix`.
+1. Extensões › … › Instalar a partir do VSIX › `painel-execucao-0.10.0.vsix`.
 2. Abra a pasta do projeto onde o Claude Code trabalha.
 3. Ctrl+Shift+P › **Abrir Visualização de Execução do Claude**.
 
@@ -68,3 +68,7 @@ MIT
 - IDs de tarefas antigas são preservados; novas tarefas recebem UUID. Histórico legado não é enviado como se fosse uma tarefa única.
 
 O resumo completo aguarda até 90 segundos, sem raciocínio extra, e só é tratado como concluído quando o provedor encerra normalmente e as cinco seções contêm texto. Respostas incompletas não entram no cache; não há repetição automática. Isso verifica o formato recebido, não garante a correção factual da IA nem a disponibilidade do serviço.
+
+## Origem, histórico e exportação
+
+O cabeçalho mostra a conversa e o projeto de origem. A lista lateral reúne as tarefas acompanhadas em diferentes sessões, com busca e filtros, sem redirecionar a captura ao consultar um histórico. **Exportar tarefa** oferece revisão do conteúdo, ocultação de categorias e termos e gravação em HTML ou JSON. A exportação não chama o Gemini e requer revisão antes de compartilhar.

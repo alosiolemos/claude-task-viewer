@@ -38,14 +38,24 @@ const REDACTIONS: [RegExp, string][] = [
 
 /** Removes the user's home path and credential-looking values, then limits the length. */
 export function sanitize(text: string, limit = FIELD_LIMIT): string {
+  let out = redact(text).text;
+  if (out.length > limit) out = out.slice(0, limit) + `\n[…] (${text.length} caracteres no total)`;
+  return out;
+}
+
+/** Same automatic redaction as sanitize, without a length limit, reporting how many values were replaced. */
+export function redact(text: string): { text: string; count: number } {
   let out = text;
   const home = os.homedir();
   if (home) {
     out = out.split(home).join('~').split(home.replace(/\\/g, '/')).join('~');
   }
-  for (const [pattern, replacement] of REDACTIONS) out = out.replace(pattern, replacement);
-  if (out.length > limit) out = out.slice(0, limit) + `\n[…] (${text.length} caracteres no total)`;
-  return out;
+  let count = 0;
+  for (const [pattern, replacement] of REDACTIONS) out = out.replace(pattern, (...args: any[]) => {
+    count++;
+    return replacement.replace('$1', typeof args[1] === 'string' ? args[1] : '');
+  });
+  return { text: out, count };
 }
 
 /** Only the data of one tool action. Returns undefined when the action has no recorded result yet. */

@@ -30,7 +30,7 @@ A linguagem deve ser simples. Não presumir conhecimento de JavaScript, Git, JSO
 ## Fora da versão 0.8.3
 
 - Explicação com Gemini da tarefa inteira: ideia futura, com limites e revisão do envio.
-- Exportação para auditoria: ideia futura.
+- Exportação da tarefa selecionada (HTML/JSON) para consulta, implementada na 0.10.0; não é certificação de auditoria.
 - Comparador de execuções, plano vs. realizado, suporte completo a subagentes e Codex.
 - Mudanças automáticas de tarefa baseadas em interpretação semântica.
 
