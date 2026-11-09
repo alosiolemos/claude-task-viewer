@@ -1,61 +1,110 @@
 import * as vscode from 'vscode';
-import { randomBytes } from 'node:crypto';
-import { EventReader } from './event-reader';
-import { buildExecutions } from './executions';
+import * as path from 'path';
+import { TranscriptReader } from './transcript-reader';
+import { TaskManager, Task } from './task-manager';
 
 export function activate(context: vscode.ExtensionContext) {
   let panel: vscode.WebviewPanel | undefined;
-  const reader = new EventReader();
+  let reader: TranscriptReader | undefined;
+  let taskManager: TaskManager | undefined;
+  let sessionId: string = '';
 
   const open = async () => {
-    if (panel) { panel.reveal(vscode.ViewColumn.Beside); return; }
-    const view = vscode.window.createWebviewPanel('painel-execucao-canvas','Painel Execução — Workflow',vscode.ViewColumn.Beside,{
-      enableScripts:true,retainContextWhenHidden:true,
-      localResourceRoots:[vscode.Uri.joinPath(context.extensionUri,'webview','dist')],
-    });
-    panel=view;
-    let disposed=false;
-    let reading=false;
-    let previous='';
-    const version=String(context.extension.packageJSON.version);
-    const send = async (initial=false) => {
-      if(disposed || reading)return;
-      reading=true;
-      try {
-        const events=await reader.readEvents();
-        const executions=buildExecutions(events);
-        const signature=JSON.stringify({executions,issue:reader.lastIssue});
-        if(initial || signature!==previous) {
-          await view.webview.postMessage({command:initial?'workflow-loaded':'workflow-updated',executions,version,issue:reader.lastIssue});
-          previous=signature;
-        }
-      } catch {
-        await view.webview.postMessage({command:'capture-error',message:'Não foi possível ler os eventos locais.',version});
-      } finally {reading=false;}
-    };
-    view.webview.onDidReceiveMessage(message=>{
-      if(message && message.command==='load-workflow') void send(true);
-    },undefined,context.subscriptions);
-    view.iconPath=vscode.Uri.joinPath(context.extensionUri,'resources','icon.svg');
-    try {
-      const file=vscode.Uri.joinPath(context.extensionUri,'webview','dist','index.html');
-      const html=new TextDecoder().decode(await vscode.workspace.fs.readFile(file));
-      const dist=view.webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri,'webview','dist')).toString();
-      const nonce=randomBytes(16).toString('hex');
-      const csp="default-src 'none'; img-src "+view.webview.cspSource+" data:; style-src "+view.webview.cspSource+" 'unsafe-inline'; script-src 'nonce-"+nonce+"' "+view.webview.cspSource+"; font-src "+view.webview.cspSource+"; connect-src 'none';";
-      view.webview.html=html
-        .replace('<head>','<head><meta http-equiv="Content-Security-Policy" content="'+csp+'">')
-        .replace(/(src|href)="(?:\/|\.\/)assets\//g,'$1="'+dist+'/assets/')
-        .replace(/<script /g,'<script nonce="'+nonce+'" ');
-    } catch {
-      view.webview.html='<html><body><h2>Painel Execução '+version+'</h2><p>Instalação incompleta: os recursos da interface não foram encontrados. Reinstale o .vsix desta versão.</p></body></html>';
+    if (panel) {
+      panel.reveal(vscode.ViewColumn.Beside);
+      return;
     }
-    const config=vscode.workspace.getConfiguration('painel-execucao');
-    const delay=Math.max(1000,Number(config.get('refreshInterval',2000))||2000);
-    const timer=config.get('autoRefresh',true)?setInterval(()=>void send(),delay):undefined;
-    view.onDidDispose(()=>{disposed=true;if(timer)clearInterval(timer);panel=undefined;},undefined,context.subscriptions);
+
+    // Solicitar sesão ao usuário
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    const selectedFolder = workspaceFolders?.[0];
+
+    if (!selectedFolder) {
+      vscode.window.showErrorMessage('Abra uma pasta no VS Code para usar o Painel Execução');
+      return;
+    }
+
+    const folderName = selectedFolder.uri.fsPath.split(/[\\\/]/).pop() || 'Projetos';
+
+    panel = vscode.window.createWebviewPanel(
+      'painel-execucao',
+      'Painel Execução',
+      vscode.ViewColumn.Beside,
+      { enableScripts: true, retainContextWhenHidden: true }
+    );
+
+    // Carregar HTML
+    try {
+      const htmlPath = vscode.Uri.joinPath(context.extensionUri, 'webview', 'painel.html');
+      const htmlContent = new TextDecoder().decode(await vscode.workspace.fs.readFile(htmlPath));
+      panel.webview.html = htmlContent;
+    } catch (e) {
+      panel.webview.html = '<h1>Erro ao carregar interface</h1>';
+    }
+
+    // Criar leitor
+    sessionId = vscode.env.sessionId || '';
+    reader = new TranscriptReader(sessionId, folderName);
+    taskManager = new TaskManager(() => {
+      const tasks = taskManager!.getAllTasks();
+      const currentTask = taskManager!.getCurrentTask();
+      panel?.webview.postMessage({
+        command: 'update-tasks',
+        tasks: tasks.map(t => ({
+          ...t,
+          createdAt: t.createdAt.toISOString(),
+        })),
+        currentTaskId: currentTask?.id || null,
+      });
+    });
+
+    let refreshTimer: NodeJS.Timeout | undefined;
+
+    const refresh = async () => {
+      const result = await reader!.readNewRecords();
+      if (result?.error) {
+        panel?.webview.postMessage({
+          command: 'error',
+          message: result.error,
+        });
+        return;
+      }
+
+      if (result?.actions && result.actions.length > 0) {
+        taskManager!.addActions(result.actions);
+      }
+    };
+
+    panel.webview.onDidReceiveMessage(async message => {
+      if (message.command === 'init') {
+        await refresh();
+      } else if (message.command === 'refresh') {
+        await refresh();
+      } else if (message.command === 'new-task') {
+        const title = await vscode.window.showInputBox({
+          prompt: 'Nome da nova tarefa',
+          value: 'Nova tarefa',
+        });
+        if (title) {
+          taskManager!.startNewTask(title);
+        }
+      } else if (message.command === 'continue-task') {
+        taskManager!.continueCurrentTask();
+      }
+    });
+
+    // Auto-refresh a cada 2 segundos
+    refreshTimer = setInterval(refresh, 2000);
+
+    panel.onDidDispose(() => {
+      if (refreshTimer) clearInterval(refreshTimer);
+      panel = undefined;
+      reader = undefined;
+      taskManager = undefined;
+    });
   };
-  context.subscriptions.push(vscode.commands.registerCommand('painel-execucao.open',open));
-  context.subscriptions.push({dispose(){panel?.dispose();}});
+
+  context.subscriptions.push(vscode.commands.registerCommand('painel-execucao.open', open));
 }
+
 export function deactivate() {}
