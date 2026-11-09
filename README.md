@@ -7,7 +7,7 @@
 
 📊 **Painel local em VS Code** para acompanhar, auditar e inspecionar execução de tarefas do Claude Code em tempo real. Similar ao N8N, mas integrado diretamente no VS Code.
 
-**Status:** ✅ **Foundation Completa** — Painel funcional, Backend validado, Extension ES Modules corrigida, .vsix 0.1.1 pronto para instalar
+**Versão local: 0.3.1** — seleção preservada, execuções de teste visíveis e atualização sem demonstração automática. Instale `painel-execucao-0.3.1.vsix` e abra o comando `Painel Execução: Abrir Painel Execução`. Eventos antigos são agrupados por sessão e pasta; conclusão só é informada quando existe evento explícito de término.
 
 ---
 

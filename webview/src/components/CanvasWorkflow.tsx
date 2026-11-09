@@ -1,156 +1,58 @@
-import React, { useCallback, useState } from 'react';
-import ReactFlow, {
-  Node,
-  Edge,
-  addEdge,
-  Connection,
-  useNodesState,
-  useEdgesState,
-} from 'reactflow';
+import React, { useCallback, useEffect, useRef } from 'react';
+import ReactFlow, { Node, Edge, Position, Controls, useNodesState, useEdgesState, applyNodeChanges } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { Stage, StageState } from '../types/workflow';
+import { Stage } from '../types/workflow';
 import './CanvasWorkflow.css';
 
-interface CanvasWorkflowProps {
-  stages: Stage[];
-  onStageSelect: (stage: Stage) => void;
+interface Props { stages:Stage[]; executionId:string; onStageSelect:(stage:Stage)=>void; }
+const colors:Record<string,string>={planned:'#6b7280',running:'#b7791f',completed:'#108b68',failed:'#c74444',cancelled:'#775da6','no-evidence':'#64748b'};
+export function CanvasWorkflow({stages,executionId,onStageSelect}:Props) {
+  const [nodes,setNodes]=useNodesState([]);
+  const [edges,setEdges,onEdgesChange]=useEdgesState([]);
+  const key='canvas-positions:'+executionId;
+  const saved=useRef<Record<string,{x:number;y:number}>>({});
+  useEffect(()=>{
+    try{saved.current=JSON.parse(localStorage.getItem(key)||'{}');}catch{saved.current={};}
+  },[key]);
+  useEffect(()=>{
+    setNodes(previous=>{
+      const current=new Map(previous.map(node=>[node.id,node]));
+      return stages.map((stage,index)=>({
+        id:stage.id,data:{label:stage.name},sourcePosition:Position.Right,targetPosition:Position.Left,
+        position:current.get(stage.id)?.position || saved.current[stage.id] || {x:index*260,y:80},
+        selected:current.get(stage.id)?.selected || false,
+        style:{background:colors[stage.state]||'#64748b',color:'#fff',padding:12,borderRadius:6,border:'2px solid #1f2937',fontSize:11,minWidth:200,maxWidth:280,whiteSpace:'pre-wrap',wordWrap:'break-word'},
+      }));
+    });
+    const known=new Set(stages.map(stage=>stage.id));
+    const next:Edge[]=[];
+    // Declared dependencies (solid lines)
+    for(const stage of stages)for(const dep of stage.dependsOn||[]){
+      if(known.has(dep))next.push({id:dep+'->'+stage.id,source:dep,target:stage.id,animated:stage.state==='running',style:{stroke:'#666',strokeDasharray:'0'},type:'smoothstep'});
+    }
+    // Observed sequence (dashed lines)
+    for(let i=0;i<stages.length-1;i++){
+      const from=stages[i], to=stages[i+1];
+      if(!next.find(e=>e.source===from.id && e.target===to.id))
+        next.push({id:from.id+'→'+to.id,source:from.id,target:to.id,animated:to.state==='running' || from.state==='running',style:{stroke:'#888',strokeDasharray:'5,5'},type:'smoothstep',label:'sequência'});
+    }
+    setEdges(next);
+  },[stages,setNodes,setEdges]);
+  const change=useCallback((changes:any)=>{
+    setNodes(previous=>{
+      const next=applyNodeChanges(changes,previous);
+      saved.current=Object.fromEntries(next.map(node=>[node.id,node.position]));
+      return next;
+    });
+  },[setNodes]);
+  const save=()=>{
+    try{localStorage.setItem(key,JSON.stringify(saved.current));}catch{}
+  };
+  return <div className="canvas-workflow-container"><ReactFlow
+    nodes={nodes} edges={edges} onNodesChange={change} onEdgesChange={onEdgesChange}
+    onNodeDragStop={save} fitView minZoom={0.15} maxZoom={2}
+    onNodeClick={(_,node)=>{const stage=stages.find(s=>s.id===node.id);if(stage)onStageSelect(stage);}}>
+    <Controls showInteractive={false}/>
+    <div className="canvas-controls"><span className="canvas-state-legend">✓ Ação concluída · ▶ Executando · ! Falhou · Conexões somente quando declaradas</span></div>
+  </ReactFlow></div>;
 }
-
-const getStateColor = (state: StageState): string => {
-  switch (state) {
-    case 'planned': return '#6b7280';
-    case 'running': return '#f59e0b';
-    case 'completed': return '#10b981';
-    case 'failed': return '#ef4444';
-    case 'cancelled': return '#8b5cf6';
-    case 'no-evidence': return '#9ca3af';
-    default: return '#e5e7eb';
-  }
-};
-
-const stateIcon = (state: StageState): string => {
-  switch (state) {
-    case 'planned': return '◯';
-    case 'running': return '▶';
-    case 'completed': return '✓';
-    case 'failed': return '✕';
-    case 'cancelled': return '⊘';
-    case 'no-evidence': return '?';
-    default: return '◯';
-  }
-};
-
-export const CanvasWorkflow: React.FC<CanvasWorkflowProps> = ({ stages, onStageSelect }) => {
-  const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<any>([]);
-
-  // Carregar posições salvas
-  const loadSavedPositions = () => {
-    try {
-      const saved = localStorage.getItem('canvas-positions');
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
-  };
-
-  // Salvar posições quando mudarem
-  const handleNodesChange = (changes: any) => {
-    try {
-      const positions: Record<string, { x: number; y: number }> = {};
-      nodes.forEach((node) => {
-        positions[node.id] = node.position;
-      });
-      localStorage.setItem('canvas-positions', JSON.stringify(positions));
-    } catch {
-      // localStorage pode não estar disponível
-    }
-    onNodesChange(changes);
-  };
-
-  React.useEffect(() => {
-    const savedPositions = loadSavedPositions();
-
-    // Gerar nós do workflow
-    const newNodes: Node[] = stages.map((stage, index) => {
-      const savedPos = savedPositions[stage.id];
-      return {
-        id: stage.id,
-        data: {
-          label: stage.name,
-          state: stage.state,
-          icon: stateIcon(stage.state),
-          actionCount: stage.actions.length,
-        },
-        position: savedPos || { x: index * 220, y: 100 },
-        style: {
-          background: getStateColor(stage.state),
-          color: '#fff',
-          padding: '12px',
-          borderRadius: '6px',
-          border: '2px solid #1f2937',
-          fontSize: '12px',
-          fontWeight: '600',
-          minWidth: '140px',
-          textAlign: 'center',
-          cursor: 'pointer',
-        },
-      };
-    });
-
-    // Gerar arestas (dependências)
-    const newEdges: Edge[] = [];
-    stages.forEach((stage, idx) => {
-      if (stage.dependsOn && stage.dependsOn.length > 0) {
-        stage.dependsOn.forEach((depId) => {
-          newEdges.push({
-            id: `${depId}-${stage.id}`,
-            source: depId,
-            target: stage.id,
-            animated: stage.state === 'running',
-            style: { stroke: '#6366f1', strokeWidth: 2 },
-          });
-        });
-      } else if (idx > 0) {
-        // Default: conectar ao anterior se sem dependência explícita
-        const prevStage = stages[idx - 1];
-        newEdges.push({
-          id: `${prevStage.id}-${stage.id}`,
-          source: prevStage.id,
-          target: stage.id,
-          style: { stroke: '#6b7280', strokeWidth: 1 },
-        });
-      }
-    });
-
-    setNodes(newNodes);
-    setEdges(newEdges);
-  }, [stages, setNodes, setEdges]);
-
-  const handleNodeClick = useCallback(
-    (event: React.MouseEvent, node: any) => {
-      const stage = stages.find((s) => s.id === node.id);
-      if (stage) onStageSelect(stage);
-    },
-    [stages, onStageSelect]
-  );
-
-  return (
-    <div className="canvas-workflow-container">
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={handleNodesChange}
-        onEdgesChange={onEdgesChange}
-        onNodeClick={handleNodeClick}
-        fitView
-      >
-        <div className="canvas-controls">
-          <span className="canvas-state-legend">
-            ◯ Planejado • ▶ Executando • ✓ Concluído • ✕ Falhou • ⊘ Cancelado
-          </span>
-        </div>
-      </ReactFlow>
-    </div>
-  );
-};

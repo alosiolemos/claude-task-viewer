@@ -3,7 +3,7 @@
  */
 
 export type StageState = 'planned' | 'running' | 'completed' | 'failed' | 'cancelled' | 'no-evidence';
-export type CaptureSource = 'real' | 'demo';
+export type CaptureSource = 'real' | 'demo' | 'unverified';
 export type ActionStatus = 'success' | 'error' | 'pending';
 export type ExecutionState = 'waiting' | 'running' | 'completed' | 'failed';
 

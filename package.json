@@ -1,19 +1,21 @@
 {
   "name": "painel-execucao",
-  "version": "0.1.0-alpha",
+  "version": "0.3.1",
   "description": "Painel local em VS Code para acompanhar e auditar execução de trabalhos do Claude Code, semelhante ao n8n.",
   "author": "Aloisio Lemos <aloisio.lemosrn@gmail.com>",
   "license": "MIT",
   "type": "module",
   "main": "collector.js",
   "scripts": {
-    "test": "bash test-collector.sh",
+    "test": "node --test tests/converter.test.cjs",
     "collect:demo": "bash test-collector.sh",
     "collect:read": "node reader.js painel-execucao",
     "ext:dev": "cd extension && npm run watch",
-    "ext:build": "cd extension && npm run build",
+    "ext:build": "node scripts/build.mjs",
     "web:dev": "cd webview && npm start",
-    "web:build": "cd webview && npm run build"
+    "web:build": "cd webview && npm run build",
+    "build": "node scripts/build.mjs",
+    "package": "node scripts/package.mjs"
   },
   "keywords": [
     "claude-code",

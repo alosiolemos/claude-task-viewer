@@ -1,5 +1,14 @@
 # 📝 Changelog
 
+## [0.3.1] — 2026-11-08
+
+- Corrige seleção que voltava para a primeira execução durante atualização.
+- Exibe ações de teste e preserva eventos não associados, sem filtro exclusivo de auditoria.
+- Remove demonstração automática e usa identificadores estáveis e deduplicação.
+- Histórico local guarda preferências, sem copiar todos os eventos a cada atualização.
+- Corrige build e pacote VSIX com versão real e assets completos.
+- Validado com oito testes de conversão, teste de interface e janela isolada do VS Code.
+
 ## [0.1.1] — 2026-11-07 (Hotfix)
 
 ### 🐛 Correções

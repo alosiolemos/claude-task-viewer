@@ -38,3 +38,6 @@ data/
 # Testes
 .coverage/
 coverage/
+
+test-results/
+*.vsix

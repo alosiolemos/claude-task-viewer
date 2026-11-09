@@ -1,60 +1,34 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import * as os from 'os';
-
-export interface PainelEvent {
-  timestamp: string;
-  projectName: string;
-  event: {
-    tool_use_id?: string;
-    tool_name?: string;
-    tool_input?: any;
-    tool_response?: any;
-    captureSource?: string;
-    available?: boolean;
-  };
-}
+import { promises as fs } from 'node:fs';
+import * as path from 'node:path';
+import * as os from 'node:os';
 
 export class EventReader {
-  private getEventsPath(projectName: string = 'painel-execucao'): string {
-    const homeDir = os.homedir();
-    return path.join(homeDir, '.painel-execucao', 'data', projectName, 'events.jsonl');
-  }
-
-  async readEvents(projectName: string = 'painel-execucao'): Promise<PainelEvent[]> {
-    const eventsPath = this.getEventsPath(projectName);
-
-    if (!fs.existsSync(eventsPath)) {
-      return [];
-    }
-
-    try {
-      const content = fs.readFileSync(eventsPath, 'utf8');
-      const lines = content.trim().split('\n').filter(l => l);
-
-      return lines.map((line) => {
-        try {
-          return JSON.parse(line);
-        } catch {
-          return null;
+  lastIssue='';
+  async readEvents(): Promise<any[]> {
+    const root=path.join(os.homedir(),'.painel-execucao','data');
+    this.lastIssue='';
+    let folders;
+    try {folders=await fs.readdir(root,{withFileTypes:true});}
+    catch(error:any){if(error.code==='ENOENT')return [];throw error;}
+    const events:any[]=[];
+    for(const folder of folders) {
+      if(!folder.isDirectory() || folder.isSymbolicLink())continue;
+      const file=path.join(root,folder.name,'events.jsonl');
+      try {
+        const stat=await fs.stat(file);
+        if(stat.size>20*1024*1024){this.lastIssue='Um histórico excede 20 MB e não foi carregado. Seus arquivos foram preservados.';continue;}
+        const text=await fs.readFile(file,'utf8');
+        for(const line of text.split('\n')) {
+          if(!line.trim())continue;
+          try {
+            const record=JSON.parse(line);
+            if(record && typeof record==='object' && record.event && typeof record.event==='object') {
+              events.push({...record,projectName:record.projectName || folder.name});
+            }
+          } catch {this.lastIssue='Há linhas incompletas ou inválidas nos registros; os demais eventos foram carregados.';}
         }
-      }).filter(Boolean) as PainelEvent[];
-    } catch {
-      return [];
+      } catch(error:any){if(error.code!=='ENOENT')throw error;}
     }
-  }
-
-  async watchEvents(
-    projectName: string = 'painel-execucao',
-    callback: (events: PainelEvent[]) => void
-  ): Promise<() => void> {
-    const eventsPath = this.getEventsPath(projectName);
-
-    const watcher = fs.watch(path.dirname(eventsPath), async () => {
-      const events = await this.readEvents(projectName);
-      callback(events);
-    });
-
-    return () => watcher.close();
+    return events;
   }
 }
