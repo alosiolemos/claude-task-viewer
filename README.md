@@ -16,7 +16,25 @@ A implementação foi construída com Claude Code, com apoio do Codex na revisã
 
 ![Uma tarefa do Claude representada em cartões conectados: solicitação, leitura, edição, verificação e resposta](docs/images/fluxo-tarefa.png)
 
-*Interface real da versão 0.9.4, com dados ilustrativos. As capturas não contêm conversas, chaves ou arquivos pessoais.*
+*A captura acima usa dados ilustrativos na interface da versão 0.9.4. As capturas da seção seguinte mostram o uso real compartilhado pelo autor.*
+
+## A ferramenta em uso no VS Code
+
+Capturas reais compartilhadas pelo autor durante o desenvolvimento do próprio projeto.
+
+### Entenda uma etapa
+
+O fluxo fica acima; abaixo, você consulta **Arquivo**, **Entrada**, **Saída / Resultado**, o comentário público do Claude e a explicação opcional do Gemini.
+
+[![Fluxo no VS Code com detalhes da etapa, comentário do Claude em laranja e explicação Gemini em azul](docs/images/uso-real-detalhes-etapa.png)](docs/images/uso-real-detalhes-etapa.png)
+
+### Entenda a tarefa inteira
+
+O resumo do Gemini organiza o pedido, as ações, os resultados e os pontos a conferir. A indicação de registros selecionados e omitidos ajuda a reconhecer os limites da explicação. É uma interpretação gerada por IA, não uma prova de que o código funciona.
+
+[![Visão do fluxo completo e resumo da tarefa com Gemini dividido em seções](docs/images/uso-real-resumo-tarefa.png)](docs/images/uso-real-resumo-tarefa.png)
+
+*Clique em uma captura para abrir a imagem em tamanho maior. Os números e estados mostrados pertencem à execução capturada, não representam a contagem de testes da versão atual.*
 
 ## O que você consegue acompanhar
 
