@@ -39,7 +39,7 @@ async function main() {
     const html=fs.readFileSync(path.join(root,'extension/webview/painel.html'),'utf8').replace('{{CSP}}',"default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-docs';").replace('{{NONCE}}','docs');
     await page.route('http://painel.test/**',r=>r.fulfill({contentType:'text/html',body:html}));
     await page.goto('http://painel.test/');
-    await page.evaluate(p=>window.postMessage({command:'payload',version:'0.8.3',payload:{...p,newerSession:''}},'*'),payload);
+    await page.evaluate(p=>window.postMessage({command:'payload',version:'0.9.3',payload:{...p,newerSession:''}},'*'),payload);
     await page.locator('.node').last().waitFor();
     await page.getByRole('button',{name:'Ajustar à tela'}).click();
     const out=path.join(root,'docs/images'); fs.mkdirSync(out,{recursive:true});

@@ -1,0 +1,37 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const {chromium}=require('C:/Users/alois/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+(async()=>{const browser=await chromium.launch({channel:'msedge',headless:true});try{
+const page=await browser.newPage({viewport:{width:1440,height:950}}),sent=[],errors=[];page.on('pageerror',e=>errors.push(e.message));
+await page.exposeFunction('__fromPanel',m=>sent.push(m));await page.addInitScript(()=>window.acquireVsCodeApi=()=>({postMessage:m=>window.__fromPanel(m),getState:()=>undefined,setState:()=>{}}));
+const html=fs.readFileSync(path.join(__dirname,'../extension/webview/painel.html'),'utf8').replace('{{CSP}}',"default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-teste';").replace('{{NONCE}}','teste');
+await page.route('http://painel.test/**',r=>r.fulfill({contentType:'text/html',body:html}));await page.goto('http://painel.test/');
+const a='11111111-1111-4111-8111-111111111111',b='22222222-2222-4222-8222-222222222222';
+let payload={sessionTitle:'Sessão',transcriptFile:'sessao.jsonl',tasks:[{id:a,title:'Auditar dez registros',actions:1,failures:0,state:'answered',active:false},{id:b,title:'Outra tarefa',actions:0,failures:0,state:'running',active:true}],selectedTaskId:a,activeTaskId:b,nodes:[],warnings:[],summary:'Uma ação',taskSummaryMeta:{scope:'sessao|'+a,revision:'r1',partial:false,totalEvents:3,includedEvents:3,omittedEvents:0,truncatedFields:0}};
+const post=async m=>{await page.evaluate(m=>window.postMessage(m,'*'),m);await page.waitForTimeout(90)};const deliver=()=>post({command:'payload',payload});const calls=()=>sent.filter(m=>m.command==='explainTask');
+await deliver();await post({command:'gemini-status',configured:true});
+assert.equal(await page.locator('#productName').innerText(),'Auditar dez registros');assert.match(await page.locator('#sessionLine').innerText(),new RegExp(a));assert.equal(await page.locator('#current button').count(),4);
+const title=await page.locator('#productName').boundingBox(),icons=await page.locator('#current').boundingBox();assert.ok(icons.x>title.x&&Math.abs(icons.y-title.y)<35);assert.equal(calls().length,0);
+await page.locator('#explainTask').click();await page.waitForTimeout(100);assert.equal(calls().length,1);assert.equal(calls()[0].taskId,a);assert.equal(await page.locator('.generating-dots span').count(),3);assert.equal(await page.locator('#dockBody').getAttribute('aria-busy'),'true');
+await post({command:'task-explanation',scope:payload.taskSummaryMeta.scope,revision:'r1',status:'incomplete',text:'Trecho interrompido',message:'Resposta incompleta: limite de geração.',meta:{...payload.taskSummaryMeta}});
+assert.match(await page.locator('#dockState').innerText(),/Resposta incompleta/);assert.match(await page.locator('#taskSummary').innerText(),/Trecho interrompido/);assert.equal(await page.getByRole('button',{name:'Tentar novamente',exact:true}).isEnabled(),true);assert.equal(await page.locator('#dockBody').getAttribute('aria-busy'),'false');
+const text=['O que você pediu','Auditar dez registros.','O que o Claude fez e por quê','Leu os dados.','Mudanças e resultados','Oito ativos e dois excluídos.','Erros, correções e pontos a conferir','Confira os arquivos.','O que você pode aprender','Separar entrada e resultado.'].join('\n');
+await post({command:'task-explanation',scope:payload.taskSummaryMeta.scope,revision:'r1',status:'ready',text,meta:{...payload.taskSummaryMeta}});assert.match(await page.locator('#taskSummary').innerText(),/Separar entrada/);assert.equal(await page.locator('#taskSummary .task-summary-sections section').count(),5);assert.equal(await page.locator('#dockState').innerText(),'Resumo concluído');
+// Real-world variation: preamble, Markdown headings, missing final section and unsafe literal text.
+const varied='Aqui está a explicação.\n\n## 1. **O que você pediu**\nVocê pediu **um painel claro**.\n\n1. **Entrada:** ler arquivo.\n2. **Resultado:** conferir retorno.\n\n### Mudanças e resultados\nO arquivo foi atualizado. <img src=x onerror=alert(1)>\n\n## O que você pode aprender\nConfira a saída antes de concluir.';
+await post({command:'task-explanation',scope:payload.taskSummaryMeta.scope,revision:'r1',status:'ready',text:varied,meta:{...payload.taskSummaryMeta}});
+assert.equal(await page.locator('#taskSummary .task-summary-sections section').count(),3);
+assert.equal(await page.locator('#taskSummary ol li').count(),2);
+assert.ok(await page.locator('#taskSummary strong').count()>=3);
+assert.equal(await page.locator('#taskSummary img').count(),0);
+assert.match(await page.locator('#taskSummary').innerText(),/onerror/);
+const cards=await page.locator('#taskSummary .task-summary-sections section').evaluateAll(es=>es.map(e=>e.getBoundingClientRect().x));assert.ok(new Set(cards).size>1,'resumo deve aproveitar a largura com colunas');
+const dir=path.join(require('node:os').tmpdir(),'painel-execucao-tests');fs.mkdirSync(dir,{recursive:true});await page.screenshot({path:path.join(dir,'task-summary-layout-0.9.1.png')});
+await page.locator('#explainTask').click();await page.waitForTimeout(60);assert.equal(calls().length,1);
+payload={...payload,taskSummaryMeta:{...payload.taskSummaryMeta,revision:'r2',partial:true,totalEvents:4,includedEvents:4}};await deliver();assert.match(await page.locator('#taskSummary').innerText(),/mudou desde/);assert.match(await page.locator('#taskSummary').innerText(),/3 de 3/);assert.equal(calls().length,1);
+await page.getByRole('button',{name:'Atualizar resumo',exact:true}).click();await page.waitForTimeout(60);assert.equal(calls().length,2);
+payload={...payload,selectedTaskId:b,taskSummaryMeta:{...payload.taskSummaryMeta,scope:'sessao|'+b,revision:'b1'}};await deliver();await post({command:'task-explanation',scope:'sessao|'+a,revision:'r2',status:'ready',text});assert.equal(await page.locator('#productName').innerText(),'Outra tarefa');
+await page.locator('#explainTask').click();await post({command:'task-explanation',scope:'sessao|'+b,revision:'b1',status:'unconfigured'});assert.match(await page.locator('#taskSummary').innerText(),/Configure sua chave/);
+await page.setViewportSize({width:900,height:850});await page.waitForTimeout(60);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+const out=path.join(require('node:os').tmpdir(),'painel-execucao-tests');fs.mkdirSync(out,{recursive:true});await page.screenshot({path:path.join(out,'task-summary-0.9.0.png')});assert.deepEqual(errors,[]);
+console.log('ok: cabeçalho, UUID, quatro ícones, tarefa selecionada, resumo em cinco seções, cache, atualização explícita, resposta atrasada e tela estreita');
+}finally{await browser.close()}})().catch(e=>{console.error(e);process.exitCode=1});

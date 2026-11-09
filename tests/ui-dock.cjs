@@ -13,7 +13,7 @@ const shotsDir = process.env.PAINEL_SHOTS || path.join(require('node:os').tmpdir
 const playwrightPath = process.env.PAINEL_PLAYWRIGHT_PATH || 'C:/Users/alois/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright';
 const T = n => new Date(Date.parse('2026-11-09T12:00:00Z') + n * 1000).toISOString();
 const NOW = Date.parse('2026-11-09T12:01:00Z');
-const DISCLOSURE = 'Use sua própria chave. Ao solicitar uma explicação, os dados selecionados desta etapa serão enviados ao Gemini. O uso está sujeito às cotas e condições da sua conta.';
+const DISCLOSURE = 'Use sua própria chave. Ao solicitar uma explicação, os dados da etapa ou da tarefa selecionada serão enviados ao Gemini. O uso está sujeito às cotas e condições da sua conta.';
 const LONG_REPLY = 'Resposta longa sem quebras obrigatórias: ' + 'alteração-aplicada-em-src/componentes/CanvasWorkflow.tsx '.repeat(160);
 const AI_TEXT = 'O que foi feito?\nLeu e editou o arquivo CanvasWorkflow.tsx para ajustar as conexões.\n\nQual foi o resultado?\nA edição falhou porque o trecho não foi encontrado.\n\nO que isso significa?\nA etapa não confirma se a correção final funcionou; a resposta final registra apenas o fim da rodada.';
 

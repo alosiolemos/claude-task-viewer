@@ -224,4 +224,35 @@ test('extensão: chave no SecretStorage, sem vazar para a interface, com consent
   await send({ command: 'explain', key: edit.key, sig: 's' });
   assert.equal(lastOf('explanation').status, 'unconfigured');
   assert.ok(!sentText().includes(KEY), 'a chave permaneceu em alguma mensagem');
+
+  // Whole-task summary is a separate scope: own consent, task boundary and cache.
+  state.nextInput=KEY; await send({command:'geminiSet'});
+  state.nextInput='Tarefa de resumo'; await send({command:'newTask'});
+  fs.appendFileSync(path.join(dir,'sessao-1.jsonl'),[
+    fx.prompt('nova-p','RESUMIR-APENAS-ESTA-TAREFA',T(10)),
+    fx.toolUse('nova-a','nova-m','nova-r','Read',{file_path:path.join(HOME,'projeto','novo.js')},T(11)),
+    fx.toolResult('nova-u','nova-r','Resultado novo',false,T(12)),
+    fx.text('nova-reply','nova-final','Retorno da tarefa nova','end_turn',T(13)),
+  ].map(line).join(''));
+  await send({command:'ready'}); const taskPayload=lastOf('payload').payload;
+  const taskId=taskPayload.selectedTaskId, meta=taskPayload.taskSummaryMeta;
+  assert.match(taskId,/^[0-9a-f]{8}-[0-9a-f-]{27}$/i,'novas tarefas têm UUID');
+  assert.ok(meta); const beforeTask=calls.length;
+  assert.equal(calls.length,beforeTask,'atualizar não deve solicitar resumo');
+  state.nextWarning=undefined;
+  await send({command:'explainTask',taskId,revision:meta.revision});
+  assert.equal(lastOf('task-explanation').status,'cancelled');assert.equal(calls.length,beforeTask);
+  state.nextWarning='Enviar ao Gemini';nextFetch={status:200,body:{candidates:[{content:{parts:[{text:['O que você pediu','O que o Claude fez e por quê','Mudanças e resultados','Erros, correções e pontos a conferir','O que você pode aprender'].map(t=>t+'\nUma leitura.').join('\n\n')}]},finishReason:'STOP'}]}};
+  await send({command:'explainTask',taskId,revision:meta.revision});
+  assert.equal(lastOf('task-explanation').status,'ready');assert.equal(calls.length,beforeTask+1);
+  const body=calls.at(-1).init.body;
+  assert.ok(body.includes('RESUMIR-APENAS-ESTA-TAREFA'));assert.ok(!body.includes(PROMPT),'legado não pode entrar no resumo da tarefa nova');
+  assert.ok(!body.includes(KEY) && !body.includes(HOME));
+  assert.equal(lastOf('task-explanation').meta.totalEvents,3);
+  await send({command:'explainTask',taskId,revision:meta.revision});assert.equal(calls.length,beforeTask+1,'cache evita repetir chamada');
+  await send({command:'explainTask',taskId:'inexistente'});assert.equal(lastOf('task-explanation').status,'unsupported');assert.equal(calls.length,beforeTask+1);
+  fs.appendFileSync(path.join(dir,'sessao-1.jsonl'),line(fx.toolUse('novo-pendente','nova-m2','novo-r2','Read',{file_path:'outro.js'},T(14))));
+  await send({command:'ready'});const afterMeta=lastOf('payload').payload.taskSummaryMeta;
+  assert.notEqual(afterMeta.revision,meta.revision);assert.equal(afterMeta.partial,true);assert.equal(calls.length,beforeTask+1,'evento novo não chama Gemini');
+  await send({command:'explainTask',taskId,revision:afterMeta.revision});assert.equal(calls.length,beforeTask+2);assert.equal(lastOf('task-explanation').meta.partial,true);
 });

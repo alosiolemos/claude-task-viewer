@@ -11,7 +11,7 @@ const CACHE_LIMIT = 100;
 export const SECTION_TITLES = ['O que foi feito?', 'Qual foi o resultado?', 'O que isso significa?'];
 
 export class GeminiError extends Error {
-  constructor(readonly userMessage: string) {
+  constructor(readonly userMessage: string, readonly partialText = '') {
     super(userMessage);
   }
 }
@@ -112,9 +112,15 @@ function messageFor(status: number): string {
 
 /** Single model, no retries and no fallback: one request per explicit user action. */
 export async function explainStep(step: StepData, apiKey: string, fetchImpl: typeof fetch = globalThis.fetch): Promise<string> {
+  return generateExplanation(promptFor(step),apiKey,fetchImpl);
+}
+
+export async function generateExplanation(prompt: string, apiKey: string, fetchImpl: typeof fetch = globalThis.fetch, maxOutputTokens = 2048, options: { timeoutMs?: number; thinkingBudget?: number } = {}): Promise<string> {
+  const timeoutMs = options.timeoutMs ?? TIMEOUT_MS;
+  const timeoutMessage = `O Gemini demorou mais de ${timeoutMs / 1000} segundos. A geração foi interrompida; tente novamente quando desejar.`;
   const body = {
-    contents: [{ role: 'user', parts: [{ text: promptFor(step) }] }],
-    generationConfig: { temperature: 0.2, maxOutputTokens: 2048 },
+    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    generationConfig: { temperature: 0.2, maxOutputTokens, ...(options.thinkingBudget !== undefined ? { thinkingConfig: { thinkingBudget: options.thinkingBudget } } : {}) },
   };
   let response: any;
   try {
@@ -122,24 +128,32 @@ export async function explainStep(step: StepData, apiKey: string, fetchImpl: typ
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-goog-api-key': apiKey },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(TIMEOUT_MS),
+      signal: AbortSignal.timeout(timeoutMs),
     });
-  } catch {
+  } catch (error: any) {
+    if (error?.name === 'TimeoutError' || error?.name === 'AbortError') throw new GeminiError(timeoutMessage);
     throw new GeminiError('Não foi possível conectar ao Gemini. Verifique a conexão e tente de novo.');
   }
   if (!response.ok) throw new GeminiError(messageFor(response.status));
   let data: any;
   try {
     data = await response.json();
-  } catch {
+  } catch (error: any) {
+    if (error?.name === 'TimeoutError' || error?.name === 'AbortError') throw new GeminiError(timeoutMessage);
     throw new GeminiError('O Gemini devolveu uma resposta que o painel não reconhece.');
   }
   const candidate = data?.candidates?.[0];
   const parts = candidate?.content?.parts;
-  const text = Array.isArray(parts) ? parts.map((p: any) => (typeof p?.text === 'string' ? p.text : '')).join('').trim() : '';
+  const text = Array.isArray(parts) ? parts.map((p: any) => (typeof p?.text === 'string' && !p.thought ? p.text : '')).join('').trim() : '';
   if (!text) {
     const reason = typeof candidate?.finishReason === 'string' ? ' (motivo: ' + candidate.finishReason + ')' : '';
     throw new GeminiError('O Gemini não devolveu texto para esta etapa' + reason + '.');
+  }
+  if (candidate.finishReason && candidate.finishReason !== 'STOP') {
+    const message = candidate.finishReason === 'MAX_TOKENS'
+      ? 'Resposta incompleta: o Gemini atingiu o limite de geração. O trecho recebido está abaixo. Você pode tentar novamente.'
+      : 'Resposta incompleta: o Gemini interrompeu a geração. Confira o trecho recebido antes de tentar novamente.';
+    throw new GeminiError(message, text);
   }
   return text;
 }

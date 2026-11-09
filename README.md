@@ -12,11 +12,11 @@ Criei este projeto porque também estou aprendendo e queria uma experiência mai
 
 A implementação foi construída com Claude Code, com apoio do Codex na revisão, nos testes e na preparação da publicação.
 
-**[Baixar a versão 0.8.3](https://github.com/alosiolemos/claude-task-viewer/releases/tag/v0.8.3)** · [Como instalar e usar](docs/como-usar.md) · [Código e testes](docs/desenvolvimento.md)
+**[Baixar a versão 0.9.3](https://github.com/alosiolemos/claude-task-viewer/releases/tag/v0.9.3)** · [Como instalar e usar](docs/como-usar.md) · [Código e testes](docs/desenvolvimento.md)
 
 ![Uma tarefa do Claude representada em cartões conectados: solicitação, leitura, edição, verificação e resposta](docs/images/fluxo-tarefa.png)
 
-*Interface real da versão 0.8.3, com dados ilustrativos. As capturas não contêm conversas, chaves ou arquivos pessoais.*
+*Interface real da versão 0.9.3, com dados ilustrativos. As capturas não contêm conversas, chaves ou arquivos pessoais.*
 
 ## O que você consegue acompanhar
 
@@ -27,7 +27,7 @@ A implementação foi construída com Claude Code, com apoio do Codex na revisã
 | O que entrou e o que saiu? | Colunas **Arquivo**, **Entrada** e **Saída / Resultado** |
 | O que mudou em uma edição? | Trechos antes/depois e alteração registrada, quando disponíveis |
 | Por que ele fez isso? | Comentário público do Claude associado à ação ou à rodada |
-| Preciso de uma explicação mais simples? | **Explicar esta etapa**, com Gemini opcional e sua própria chave |
+| Preciso de uma explicação mais simples? | **Explicar esta etapa** ou **Explicar tarefa inteira**, com Gemini opcional e sua própria chave |
 
 O painel **observa** o Claude. Ele não programa por você, não executa os comandos exibidos e não altera seus arquivos.
 
@@ -60,14 +60,18 @@ As informações abrem **abaixo do fluxo**, em um painel de altura ajustável. O
 
 Você precisa do **VS Code** e do **Claude Code gravando transcrições locais**. O fluxo de instalação e uso foi validado no Windows; outros sistemas ainda precisam de validação.
 
-1. Abra a [página da versão 0.8.3](https://github.com/alosiolemos/claude-task-viewer/releases/tag/v0.8.3).
-2. Em **Assets**, baixe **`painel-execucao-0.8.3.vsix`**. Esse é o instalador; não é necessário baixar o código-fonte.
+1. Abra a [página da versão 0.9.3](https://github.com/alosiolemos/claude-task-viewer/releases/tag/v0.9.3).
+2. Em **Assets**, baixe **`painel-execucao-0.9.3.vsix`**. Esse é o instalador; não é necessário baixar o código-fonte.
 3. No VS Code, abra **Extensões** (`Ctrl+Shift+X`), clique em **…** e escolha **Instalar a partir do VSIX / Install from VSIX**.
 4. Selecione o arquivo baixado. Se o VS Code pedir, recarregue a janela.
 5. Abra a mesma pasta em que está usando o Claude Code.
 6. Pressione `Ctrl+Shift+P` e procure **Abrir Visualização de Execução do Claude**.
 
 **Não precisa de terminal, npm, Python, servidor ou chave do Gemini para usar o painel básico.** O VSIX já vem pronto. Se aparecer um bloqueio de segurança do sistema, não desative a proteção: registre o erro para investigação.
+
+## Novidades da versão 0.9.3
+
+O título e o identificador da tarefa ficam à esquerda do cabeçalho. À direita, passe o mouse pelos quatro ícones: **Trocar sessão**, **Explicar tarefa inteira com Gemini**, **Configurações** e **Nova tarefa**. O resumo abre abaixo do fluxo, em seções responsivas.
 
 ## Usar no dia a dia
 
@@ -87,7 +91,9 @@ O conteúdo que já existia antes da primeira abertura fica em **Histórico lega
 
 Use **Configurações → Adicionar chave** para informar sua própria chave de API. Ela é armazenada no **SecretStorage do VS Code**; nenhuma chave do autor acompanha o projeto.
 
-A explicação só é solicitada ao clicar em **Explicar esta etapa**. O aplicativo envia os dados selecionados da ação e o comentário público associado, sanitizados e com limites de tamanho. Na primeira solicitação, mostra o que será enviado. Não envia automaticamente a conversa inteira nem raciocínio interno.
+A explicação só é solicitada por clique: **Explicar esta etapa** usa a ação e seu comentário público; o ícone azul no cabeçalho explica a **tarefa selecionada**, incluindo seu pedido, ações, resultados, comentários públicos e respostas. Há uma confirmação própria para o resumo completo. Outras tarefas e raciocínio interno não são enviados.
+
+O resumo apresenta cinco partes: o que você pediu; o que o Claude fez e por quê; mudanças e resultados; erros e pontos a conferir; e o que você pode aprender. Os dados são sanitizados e limitados a 48.000 caracteres e até 120 registros, com indicação de omissões e campos limitados. O painel aguarda até 90 segundos e identifica geração, conclusão ou resposta incompleta. Não há repetição automática ou fallback de provedor.
 
 A sanitização reduz exposição; não garante remover toda informação confidencial presente em código ou resultados. Revise os dados antes do envio. O uso da API depende das cotas, preços e condições da conta do usuário. A assinatura do Claude não inclui automaticamente essa API. Sem chave, os detalhes locais continuam funcionando.
 
@@ -112,10 +118,9 @@ flowchart LR
 
 ## Ideias para depois — ainda não disponíveis
 
-- **Explicar tarefa inteira:** um botão para o Gemini resumir o objetivo, as ações, as correções, os resultados registrados e o que falta verificar. Somente a tarefa selecionada, por solicitação do usuário, com limites de envio e indicação de dados omitidos; nunca toda a conta ou sessões de outros projetos.
 - **Exportar tarefa:** salvar um registro para consulta e comparação, sem tratar o arquivo como prova de sucesso ou certificação de auditoria.
 
-Estas são possibilidades futuras. A versão 0.8.3 explica individualmente as etapas, e a exportação não está implementada.
+Estas são possibilidades futuras. A versão 0.9.3 já explica etapas e a tarefa selecionada; a exportação não está implementada.
 
 ## Para explorar e contribuir
 

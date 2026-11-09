@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import type { TranscriptEvent } from './transcript-model';
 
 export const LEGACY_ID = 'legado';
@@ -60,8 +61,8 @@ export function shortTitle(text: string): string {
   return single.length > 80 ? single.slice(0, 77).trimEnd() + '…' : single;
 }
 
-function newId(now: number): string {
-  return 'tarefa-' + now.toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+function newId(): string {
+  return randomUUID();
 }
 
 function hasEvents(state: TaskState, taskId: string): boolean {
@@ -92,7 +93,7 @@ export function assignNewEvents(state: TaskState, events: TranscriptEvent[], now
     const event = events[i];
     let task = state.tasks.find(t => t.id === state.activeTaskId);
     if (!task) {
-      task = { id: newId(now), title: 'Tarefa sem título', titleSource: 'default', createdAt: new Date(now).toISOString() };
+      task = { id: newId(), title: 'Tarefa sem título', titleSource: 'default', createdAt: new Date(now).toISOString() };
       state.tasks.push(task);
       state.activeTaskId = task.id;
     }
@@ -116,7 +117,7 @@ export function startNewTask(state: TaskState, title: string | undefined, now = 
     task = current;
     if (clean) { task.title = clean; task.titleSource = 'user'; }
   } else {
-    task = { id: newId(now), title: clean || 'Nova tarefa', titleSource: clean ? 'user' : 'default', createdAt: new Date(now).toISOString() };
+    task = { id: newId(), title: clean || 'Nova tarefa', titleSource: clean ? 'user' : 'default', createdAt: new Date(now).toISOString() };
     state.tasks.push(task);
   }
   state.activeTaskId = task.id;

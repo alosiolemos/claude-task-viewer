@@ -1,5 +1,32 @@
 # 📝 Changelog
 
+## [0.9.3] — 2026-11-09
+
+- Resumo completo com prazo de 90 segundos e thinkingBudget zero, preservando o limite de saída e uma chamada por clique.
+- Validação das cinco seções com conteúdo antes de aceitar e armazenar o resumo como concluído.
+- Etapas individuais mantêm o prazo anterior. Sem alterações no layout ou novos botões.
+
+## [0.9.2] — 2026-11-09 (incluída na publicação 0.9.3)
+
+- Três pontos animados durante a geração, respeitando movimento reduzido.
+- Estado de geração separado do estado da tarefa: concluído, erro ou resposta incompleta.
+- Resposta interrompida pelo provedor preservada e identificada; não entra no cache como sucesso e permite nova tentativa manual.
+- Pedido de resumo mais conciso para evitar repetição extensa das instruções.
+
+## [0.9.1] — 2026-11-09 (incluída na publicação 0.9.3)
+
+- Resumo da tarefa distribuído em seções responsivas para aproveitar a largura do painel.
+- Títulos reconhecidos mesmo com Markdown, numeração ou seções ausentes; listas, negrito e código exibidos como DOM seguro.
+- Sem mudanças nas chamadas, na chave ou nos dados enviados ao Gemini.
+
+## [0.9.0] — 2026-11-09 (incluída na publicação 0.9.3)
+
+- Cabeçalho com título e identificador da tarefa à esquerda e quatro botões de ícone à direita.
+- Resumo completo opcional com Gemini, restrito à tarefa selecionada, no painel inferior.
+- Cinco seções para facilitar o aprendizado; aviso de resumo parcial, omissões e limites de envio.
+- Consentimento específico para enviar pedidos e comentários públicos da tarefa, chave no SecretStorage e cache sem chamadas automáticas.
+- UUID para novas tarefas, preservando IDs e associações existentes.
+
 ## [0.8.3] — 2026-11-09
 
 ### Corrigido

@@ -206,6 +206,30 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
 .dlg-sec p { margin: 0; max-width: 70ch; overflow-wrap: anywhere; }
 .dlg-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .dlg-foot { display: flex; justify-content: flex-end; padding: 10px 14px; border-top: 1px solid var(--line); }
+.app > header { flex-wrap: nowrap; }
+.app > header .session { flex: 1 1 0; }
+.header-actions { display: flex; align-items: center; gap: 6px; flex: none; }
+.header-actions .icon-btn { position: relative; width: 32px; height: 32px; }
+.header-actions .icon-btn::after { content: attr(aria-label); display: none; position: absolute; right: 0; top: calc(100% + 5px); z-index: 30; white-space: nowrap; padding: 5px 8px; background: var(--raised); color: var(--fg); border: 1px solid var(--line); border-radius: 3px; font-size: 12px; pointer-events: none; }
+.header-actions .icon-btn:hover::after, .header-actions .icon-btn:focus-visible::after { display: block; }
+.session h1:focus-visible { outline-offset: 2px; }
+.task-summary-sections { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,360px),1fr)); gap: 22px 28px; margin-top: 20px; align-items: start; }
+.task-summary-sections h3 { margin: 0 0 12px; padding-bottom: 9px; border-bottom: 1px solid var(--line); font-size: 1.08em; color: var(--fg); }
+.task-summary-sections .prose { max-width: none; }
+#taskSummary { padding: 16px 20px; }
+#taskSummary > .task-rich { margin-top: 12px; }
+.task-rich { min-width: 0; line-height: 1.65; overflow-wrap: anywhere; }
+.task-rich p { margin: 0 0 12px; }
+.task-rich ul, .task-rich ol { margin: 6px 0 14px; padding-left: 22px; }
+.task-rich li { margin-bottom: 8px; padding-left: 3px; }
+.task-rich code { font-family: var(--mono); font-size: .94em; background: var(--bg); padding: 1px 4px; border-radius: 3px; }
+#taskSummary .ai-actions { margin-top: 18px; }
+.generating-dots { display: inline-flex; margin-left: 2px; }
+.generating-dots span { animation: generating-dot 1.2s infinite; }
+.generating-dots span:nth-child(2) { animation-delay: .2s; }
+.generating-dots span:nth-child(3) { animation-delay: .4s; }
+@keyframes generating-dot { 0%, 70%, 100% { opacity: .25; } 35% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .generating-dots span { animation: none; opacity: 1; } }
 </style>
 </head>
 <body>
@@ -246,9 +270,13 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
 
 <div class="app">
   <header>
-    <div class="session"><h1 id="productName">Visualização Modular de Execução das Tarefas do Claude</h1><p id="sessionLine">Carregando transcrição…</p></div>
-    <button class="btn" id="chooseSession" title="Escolher outra sessão do Claude deste projeto"><svg class="i"><use href="#i-swap"/></svg>Trocar sessão</button>
-    <div class="current" id="current"></div>
+    <div class="session"><h1 id="productName" tabindex="0" aria-keyshortcuts="F2">Carregando tarefa…</h1><p id="sessionLine">ID: —</p></div>
+    <div class="header-actions" id="current">
+      <button class="icon-btn" id="chooseSession" aria-label="Trocar sessão"><svg class="i"><use href="#i-swap"/></svg></button>
+      <button class="icon-btn" id="explainTask" aria-label="Explicar tarefa inteira com Gemini" disabled><svg class="brand" aria-hidden="true"><use href="#logo-gemini"/></svg></button>
+      <button class="icon-btn" id="settingsButton" aria-label="Configurações"><svg class="i"><use href="#i-gear"/></svg></button>
+      <button class="icon-btn" id="newTaskButton" aria-label="Nova tarefa"><svg class="i"><use href="#i-plus"/></svg></button>
+    </div>
   </header>
   <div class="body">
     <aside class="history" id="taskPane" aria-label="Histórico de tarefas"><h2>Tarefas</h2><div id="tasks"></div></aside>
@@ -297,7 +325,7 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
     <section class="dlg-sec">
       <h3>Gemini (opcional)</h3>
       <p><span class="chip" id="geminiStatus">Não configurado</span></p>
-      <p>Use sua própria chave. Ao solicitar uma explicação, os dados selecionados desta etapa serão enviados ao Gemini. O uso está sujeito às cotas e condições da sua conta.</p>
+      <p>Use sua própria chave. Ao solicitar uma explicação, os dados da etapa ou da tarefa selecionada serão enviados ao Gemini. O uso está sujeito às cotas e condições da sua conta.</p>
       <p class="note">Sem chave, o painel funciona normalmente. A chave fica no armazenamento seguro do VS Code: não aparece aqui, nos registros nem no repositório.</p>
       <div class="dlg-actions">
         <button type="button" class="btn primary" id="geminiSet">Adicionar chave</button>
@@ -325,6 +353,7 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
     tasksHidden: !!persisted.tasksHidden,
     detailsKey: null, detailsSig: '', detailsJson: '', details: null,
     explain: {},
+    taskExplain: {}, taskMode: null, taskRenderSig: '',
     gemini: { configured: false },
     rendered: new Map(),
     knownKeys: new Set(),
@@ -400,27 +429,24 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
 
   // ---------- header, settings and history ----------
   function renderHeader(p) {
-    $('sessionLine').textContent = (p.sessionTitle ? 'Sessão: ' + p.sessionTitle : 'Sessão sem título') + (p.transcriptFile ? ' · ' + p.transcriptFile : '');
-    $('sessionLine').title = $('sessionLine').textContent;
-    const current = $('current');
-    current.replaceChildren();
-    const active = p.tasks.find(t => t.id === p.activeTaskId);
     const selected = p.tasks.find(t => t.id === p.selectedTaskId);
-    if (active) {
-      current.append(el('span', 'label', 'Tarefa atual'), el('strong', '', active.title));
-      current.lastChild.title = active.title;
-    } else {
-      current.append(el('span', 'label', 'Nenhuma tarefa atual: a próxima ação inicia uma'));
-    }
-    if (selected && !selected.legacy && selected.id !== p.activeTaskId) {
-      current.append(button('btn', 'Continuar esta tarefa', null, () => post({ command: 'continueTask', taskId: selected.id }), 'As próximas ações do Claude entram na tarefa que você está vendo'));
-    }
-    if (selected && !selected.legacy) {
-      current.append(button('icon-btn', '', 'rename', () => post({ command: 'renameTask', taskId: selected.id }), 'Renomear a tarefa exibida'));
-    }
-    current.append(button('btn', 'Configurações', 'gear', openSettings, 'Configurações (Gemini opcional)'));
-    current.append(button('btn primary', 'Nova tarefa', 'plus', () => post({ command: 'newTask' }), 'As próximas ações do Claude entram em uma nova tarefa'));
+    $('productName').textContent = selected ? selected.title : 'Selecione uma tarefa';
+    $('productName').title = selected && !selected.legacy ? 'Duplo clique ou F2 para renomear esta tarefa' : 'Tarefa exibida';
+    const uuid = selected && /^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(selected.id);
+    $('sessionLine').textContent = (uuid ? 'UUID: ' : 'ID: ') + (selected ? selected.id : '—');
+    $('sessionLine').title = selected ? selected.id : '';
+    $('explainTask').disabled = !p.taskSummaryMeta || !selected || selected.legacy;
+    $('chooseSession').setAttribute('aria-description', 'Sessão selecionada: ' + (p.transcriptFile || 'nenhuma'));
   }
+  function renameSelectedTask() {
+    const p=ui.payload; const t=p && p.tasks.find(t=>t.id===p.selectedTaskId);
+    if(t && !t.legacy) post({command:'renameTask',taskId:t.id});
+  }
+  $('productName').addEventListener('dblclick',renameSelectedTask);
+  $('productName').addEventListener('keydown',ev=>{if(ev.key==='F2'){ev.preventDefault();renameSelectedTask();}});
+  $('settingsButton').addEventListener('click',openSettings);
+  $('newTaskButton').addEventListener('click',()=>post({command:'newTask'}));
+  $('explainTask').addEventListener('click',openTaskExplanation);
 
   function openSettings() {
     renderGeminiStatus();
@@ -461,6 +487,12 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
     const box = $('banners');
     box.replaceChildren();
     for (const w of p.warnings || []) box.append(el('div', 'banner', w));
+    const selected=p.tasks.find(t=>t.id===p.selectedTaskId);
+    if(selected && !selected.legacy && selected.id!==p.activeTaskId) {
+      const notice=el('div','banner','Consultando histórico. As próximas ações continuam na tarefa ativa.');
+      notice.append(button('btn','Continuar esta tarefa',null,()=>post({command:'continueTask',taskId:selected.id})));
+      box.append(notice);
+    }
     if (p.newerSession) {
       const b = el('div', 'banner', 'Há uma sessão mais recente neste projeto: ' + p.newerSession + '.');
       b.append(button('btn', 'Abrir', null, () => post({ command: 'openNewer' })));
@@ -673,6 +705,7 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
 
   // ---------- selection and bottom details dock ----------
   function selectNode(key) {
+    ui.taskMode=null; ui.taskRenderSig='';
     const p = ui.payload; if (!p || !p.selectedTaskId) return;
     ui.selectedNode[p.selectedTaskId] = key;
     save();
@@ -680,6 +713,7 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
     syncDock(true);
   }
   function closeDock() {
+    ui.taskMode=null; ui.taskRenderSig='';
     const p = ui.payload;
     if (p && p.selectedTaskId) delete ui.selectedNode[p.selectedTaskId];
     save();
@@ -688,6 +722,7 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
   }
   // Updates never close the dock or change the selected step; only the user does that.
   function syncDock(force) {
+    if(ui.taskMode){renderTaskExplanation();return;}
     const p = ui.payload;
     const key = p && p.selectedTaskId ? ui.selectedNode[p.selectedTaskId] : null;
     $('dock').hidden = !key;
@@ -863,13 +898,14 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
     s.append(fold(key, 'comentario', false, [brandIcon('logo-claude'), line], children, 'comment-fold'));
     return s;
   }
-  function splitExplanation(text) {
-    const idx = SECTIONS.map(t => text.indexOf(t));
+  function splitExplanation(text, titles = SECTIONS) {
+    const idx = titles.map(t => text.indexOf(t));
     if (idx.some(i => i < 0) || idx.some((v, i) => i > 0 && v <= idx[i - 1])) return null;
-    return SECTIONS.map((t, i) => [t, text.slice(idx[i] + t.length, i + 1 < SECTIONS.length ? idx[i + 1] : text.length).trim()]);
+    return titles.map((t, i) => [t, text.slice(idx[i] + t.length, i + 1 < titles.length ? idx[i + 1] : text.length).trim()]);
   }
 
   function renderDetails(d) {
+    if(ui.taskMode)return;
     const p = ui.payload;
     const key = p && p.selectedTaskId ? ui.selectedNode[p.selectedTaskId] : null;
     if (!d || !key || d.key !== key) return;
@@ -908,6 +944,7 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
     return s;
   }
   function renderExplain() {
+    if(ui.taskMode)return;
     const box = $('aiBox');
     if (!box) return;
     const key = ui.detailsKey;
@@ -972,6 +1009,101 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
     post({ command: 'explain', key, sig });
   }
 
+  // Whole-task explanations use the selected task, independent of the active capture task.
+  const TASK_SECTIONS=['O que você pediu','O que o Claude fez e por quê','Mudanças e resultados','Erros, correções e pontos a conferir','O que você pode aprender'];
+  function taskMeta(){return ui.payload && ui.payload.taskSummaryMeta;}
+  function openTaskExplanation() {
+    const meta=taskMeta(); if(!meta)return;
+    ui.taskMode=meta.scope; ui.taskRenderSig=''; ui.dock.collapsed=false;
+    const previous=ui.taskExplain[meta.scope];
+    if(previous && previous.revision===meta.revision && ['ready','loading'].includes(previous.status)) {renderTaskExplanation();return;}
+    requestTaskExplanation();
+  }
+  function requestTaskExplanation() {
+    const meta=taskMeta(); if(!meta)return;
+    const previous=ui.taskExplain[meta.scope];
+    if(previous && previous.revision===meta.revision && previous.status==='loading')return;
+    ui.taskExplain[meta.scope]={revision:meta.revision,status:'loading',meta:{...meta}};
+    renderTaskExplanation();
+    post({command:'explainTask',taskId:ui.payload.selectedTaskId,revision:meta.revision});
+  }
+  // Recognize public headings even when Gemini adds Markdown, numbering or omits a section.
+  function taskSections(text) {
+    const sections=[]; let current=null, intro=[];
+    const normalize=t=>t.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+    const canonical=TASK_SECTIONS.map(normalize);
+    for(const line of String(text||'').split('\n')) {
+      const clean=normalize(line).replace(/^\d+\s*/, '');
+      const index=canonical.findIndex(t=>clean===t);
+      if(index>=0){current={title:TASK_SECTIONS[index],lines:[]};sections.push(current);}
+      else if(current)current.lines.push(line);else intro.push(line);
+    }
+    return {intro:intro.join('\n').trim(),sections:sections.map(s=>({title:s.title,text:s.lines.join('\n').trim()}))};
+  }
+  function appendInline(parent,text) {
+    // Construct DOM nodes only. Never interpret model output as HTML or links.
+    const tokens=String(text).split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
+    for(const token of tokens) {
+      if(token.startsWith('**')&&token.endsWith('**'))parent.append(el('strong','',token.slice(2,-2)));
+      else if(token.startsWith('`')&&token.endsWith('`'))parent.append(el('code','',token.slice(1,-1)));
+      else parent.append(document.createTextNode(token));
+    }
+  }
+  function taskRichText(text) {
+    const root=el('div','task-rich');let paragraph=[],list=null,listType='';
+    const flush=()=>{if(paragraph.length){const p=el('p');appendInline(p,paragraph.join(' '));root.append(p);paragraph=[];}};
+    for(const line of String(text||'').split('\n')) {
+      const item=line.match(/^\s*(?:([-*•])|\d+[.)])\s+(.+)$/);
+      if(item){flush();const type=item[1]?'ul':'ol';if(!list||listType!==type){list=el(type);listType=type;root.append(list);}const li=el('li');appendInline(li,item[2]);list.append(li);}
+      else {list=null;if(!line.trim()){flush();}else paragraph.push(line.trim());}
+    }
+    flush();return root;
+  }
+  function renderTaskExplanation() {
+    const meta=taskMeta(), p=ui.payload;
+    if(!meta || meta.scope!==ui.taskMode){ui.taskMode=null;ui.taskRenderSig='';syncDock(false);return;}
+    const task=p.tasks.find(t=>t.id===p.selectedTaskId);
+    const result=ui.taskExplain[meta.scope];
+    const stale=result && result.revision!==meta.revision;
+    const described=result && result.meta || meta;
+    $('dock').hidden=false;
+    $('dockIcon').replaceChildren(brandIcon('logo-gemini'));
+    $('dockTitle').textContent='Resumo da tarefa — '+(task ? task.title : '');
+    $('dockTitle').title=$('dockTitle').textContent;
+    $('dockFile').hidden=true;
+    $('dockState').textContent=result && result.status==='loading' ? 'Gerando resumo' : result && result.status==='incomplete' ? 'Resposta incompleta' : result && result.status==='error' ? 'Falha ao gerar' : result && result.status==='ready' ? 'Resumo concluído' : 'Resumo da tarefa';
+    $('dockState').className='chip'+(described.partial ? ' warn' : '');
+    applyDock();
+    const sig=JSON.stringify({meta,result,configured:ui.gemini.configured,title:task && task.title});
+    if(sig===ui.taskRenderSig)return;ui.taskRenderSig=sig;
+    const body=$('dockBody'), keep=body.scrollTop;body.setAttribute('aria-busy',String(!!(result && result.status==='loading')));
+    const box=el('section','block wide ai-block');box.id='taskSummary';
+    box.append(el('h3','','EXPLICAÇÃO DA TAREFA COM GEMINI'),el('p','note','Interpretação gerada por IA. Confira os resultados registrados antes de concluir que o trabalho deu certo.'));
+    if(described.partial)box.append(el('p','note','Resumo parcial: a tarefa tem ações em andamento ou ainda não registrou uma resposta final.'));
+    box.append(el('p','note',described.includedEvents+' de '+described.totalEvents+' registros selecionados · '+described.omittedEvents+' omitidos · '+described.truncatedFields+' campos limitados.'));
+    if(!ui.gemini.configured)box.append(el('p','note','Sem chave do Gemini configurada. Adicione sua chave em Configurações.'));
+    if(stale)box.append(el('p','note','A tarefa mudou desde este resumo. Use Atualizar resumo para considerar os novos registros.'));
+    if(result && (result.status==='ready' || result.status==='incomplete')) {
+      if(result.status==='incomplete'){const warning=el('p','note',result.message || 'Resposta incompleta. Você pode tentar novamente.');warning.setAttribute('role','status');box.append(warning);}
+      else box.append(el('p','note','Resumo concluído. A geração terminou.'));
+      const parts=taskSections(result.text);
+      if(parts.intro)box.append(taskRichText(parts.intro));
+      if(parts.sections.length){const sections=el('div','task-summary-sections');for(const part of parts.sections){const section=el('section');section.append(el('h3','',part.title),taskRichText(part.text));sections.append(section);}box.append(sections);}
+    } else {
+      const labels={loading:'Gerando resumo da tarefa…',error:'Não foi possível gerar o resumo.',unconfigured:'Configure sua chave para explicar esta tarefa.',cancelled:'Envio cancelado. Nenhum dado foi enviado.',insufficient:'A tarefa ainda não possui registros para explicar.',unsupported:'Selecione uma tarefa válida para explicar.'};
+      const message=el('p','prose',result ? (result.message || labels[result.status] || '') : 'Peça uma explicação da tarefa selecionada.');message.setAttribute('role','status');if(result && result.status==='loading'){message.textContent='Gerando resumo da tarefa';const dots=el('span','generating-dots');dots.setAttribute('aria-hidden','true');for(let i=0;i<3;i++)dots.append(el('span','','.'));message.append(dots);message.setAttribute('aria-label','Gerando resumo da tarefa. Aguarde.');}box.append(message);
+    }
+    const actions=el('div','ai-actions');
+    const busy=result && result.status==='loading';
+    const retry=button('btn primary',busy ? 'Gerando…' : result && result.status==='ready' ? 'Atualizar resumo' : result && result.status==='incomplete' ? 'Tentar novamente' : 'Explicar tarefa inteira','spark',()=>{
+      if(result && result.status==='ready' && !stale)return;
+      requestTaskExplanation();
+    });
+    retry.disabled=!!busy || (result && result.status==='ready' && !stale);
+    actions.append(retry);box.append(actions);
+    body.replaceChildren(box);body.scrollTop=keep;
+  }
+
   // ---------- main ----------
   function render() {
     const p = ui.payload; if (!p) return;
@@ -986,17 +1118,21 @@ dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
       const previousTask = ui.payload && ui.payload.selectedTaskId;
       ui.payload = m.payload;
       if (previousTask !== m.payload.selectedTaskId) {
+        ui.taskMode=null;ui.taskRenderSig='';
         for (const [, card] of ui.rendered) card.remove();
         ui.rendered.clear(); ui.knownKeys = new Set();
         ui.detailsSig = '';
       }
       render();
+    } else if (m.command === 'task-explanation' && typeof m.scope==='string') {
+      ui.taskExplain[m.scope]={revision:m.revision,status:m.status,text:m.text,message:m.message,meta:m.meta || (ui.taskExplain[m.scope] && ui.taskExplain[m.scope].meta)};
+      if(ui.taskMode===m.scope)renderTaskExplanation();
     } else if (m.command === 'details') {
       renderDetails(m.details);
     } else if (m.command === 'gemini') {
       ui.gemini = { configured: !!m.configured };
       renderGeminiStatus();
-      renderExplain();
+      if(ui.taskMode)renderTaskExplanation();else renderExplain();
     } else if (m.command === 'explanation' && typeof m.key === 'string') {
       ui.explain[m.key] = { sig: m.sig, status: m.status, text: m.text, message: m.message };
       if (m.key === ui.detailsKey) renderExplain();

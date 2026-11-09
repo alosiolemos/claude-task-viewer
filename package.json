@@ -1,13 +1,13 @@
 {
   "name": "painel-execucao",
-  "version": "0.8.3",
+  "version": "0.9.3",
   "description": "Visualização local no VS Code das tarefas do Claude Code, a partir das transcrições. Inspirada em visualizações de workflow como as do n8n; sem vínculo com o n8n.",
   "author": "Aloisio Lemos <aloisio.lemosrn@gmail.com>",
   "license": "MIT",
   "type": "module",
   "main": "collector.js",
   "scripts": {
-    "test": "node --test tests/reader.test.cjs tests/tasks.test.cjs tests/details.test.cjs tests/gemini.test.cjs tests/extension.test.cjs",
+    "test": "node --test tests/reader.test.cjs tests/tasks.test.cjs tests/details.test.cjs tests/gemini.test.cjs tests/extension.test.cjs tests/task-summary.test.cjs",
     "collect:demo": "bash test-collector.sh",
     "collect:read": "node reader.js painel-execucao",
     "ext:dev": "cd extension && npm run watch",
@@ -17,7 +17,7 @@
     "build": "node scripts/build.mjs",
     "package": "node scripts/package.mjs",
     "test:legado": "node --test tests/converter.test.cjs",
-    "test:ui": "node tests/ui-browser.cjs && node tests/ui-dock.cjs && node tests/ui-folds.cjs"
+    "test:ui": "node tests/ui-browser.cjs && node tests/ui-dock.cjs && node tests/ui-folds.cjs && node tests/ui-task-summary.cjs"
   },
   "keywords": [
     "claude-code",

@@ -1,9 +1,9 @@
-# Visualização Modular de Execução das Tarefas do Claude — 0.8.3
+# Visualização Modular de Execução das Tarefas do Claude — 0.9.3
 
 Mostra, em cartões conectados dentro do VS Code, o que o Claude Code fez em cada tarefa: pedidos, leituras, edições, comandos, erros e respostas. Inspirada em visualizações de workflow como as do n8n, sem vínculo com o n8n.
 
 ## Instalar e abrir
-1. Extensões › … › Instalar a partir do VSIX › `painel-execucao-0.8.3.vsix`.
+1. Extensões › … › Instalar a partir do VSIX › `painel-execucao-0.9.3.vsix`.
 2. Abra a pasta do projeto onde o Claude Code trabalha.
 3. Ctrl+Shift+P › **Abrir Visualização de Execução do Claude**.
 
@@ -58,3 +58,13 @@ MIT
 ## Apresentação e screenshots
 
 [Claude Task Viewer no GitHub](https://github.com/alosiolemos/claude-task-viewer) — guia visual para quem quer entender as ações do Claude sem dominar programação. O nome interno da extensão permanece painel-execucao.
+
+## Cabeçalho e resumo completo da tarefa
+- Título da tarefa selecionada à esquerda e identificador abaixo; os quatro ícones ficam à direita: trocar sessão, explicar tarefa com Gemini, configurações e nova tarefa. Passe o mouse ou use o teclado para identificar cada botão. Duplo clique no título ou F2 permite renomear.
+- O ícone do Gemini explica somente a tarefa selecionada no painel inferior: pedido, ações e motivos públicos, resultados, erros/pontos a conferir e aprendizado. A explicação individual de cada etapa continua disponível.
+- Na primeira solicitação de resumo completo, uma confirmação informa que também serão enviados o pedido e as respostas daquela tarefa, com sanitização. A chave permanece no SecretStorage do VS Code.
+- Envio limitado a 48.000 caracteres e até 120 registros; campos extensos são limitados. A interface informa registros omitidos e campos limitados. Tarefas ainda em andamento recebem identificação de resumo parcial.
+- O resumo é gerado somente por clique; não há atualização automática nem fallback de provedor. O resumo pronto é reaproveitado enquanto os dados não mudam; alterações exibem um aviso para atualização manual. A API pode consumir sua cota ou gerar cobrança conforme sua conta.
+- IDs de tarefas antigas são preservados; novas tarefas recebem UUID. Histórico legado não é enviado como se fosse uma tarefa única.
+
+O resumo completo aguarda até 90 segundos, sem raciocínio extra, e só é tratado como concluído quando o provedor encerra normalmente e as cinco seções contêm texto. Respostas incompletas não entram no cache; não há repetição automática. Isso verifica o formato recebido, não garante a correção factual da IA nem a disponibilidade do serviço.

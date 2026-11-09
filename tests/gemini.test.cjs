@@ -147,3 +147,13 @@ test('cache: mesma etapa reaproveita a explicação; mudança da etapa gera nova
 test('modelo: um único modelo configurado, sem fallback', () => {
   assert.equal(gemini.GEMINI_MODEL, 'gemini-2.5-flash');
 });
+
+test('resposta interrompida: MAX_TOKENS preserva trecho e não é tratada como concluída', async () => {
+  const {fn}=fakeFetch({status:200,body:{candidates:[{content:{parts:[{text:'O resumo terminou no meio de uma pala'}]},finishReason:'MAX_TOKENS'}]}});
+  await assert.rejects(gemini.generateExplanation('teste','chave-ficticia',fn),e=>e instanceof gemini.GeminiError && /incompleta/.test(e.userMessage) && e.partialText==='O resumo terminou no meio de uma pala');
+});
+
+test('tempo limite: a espera termina com erro legível e sem repetição automática', async () => {
+  const timeout=new Error('timeout');timeout.name='TimeoutError';const {fn,calls}=fakeFetch(timeout);
+  await assert.rejects(gemini.generateExplanation('teste','chave-ficticia',fn),e=>/30 segundos/.test(e.userMessage));assert.equal(calls.length,1);
+});

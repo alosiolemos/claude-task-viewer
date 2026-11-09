@@ -8,10 +8,13 @@ import { TranscriptModel } from './transcript-model';
 import * as tasks from './task-store';
 import { buildDetails, buildPayload } from './view';
 import * as gemini from './gemini';
+import { buildTaskData, taskCacheId, explainTask } from './task-summary';
 
 const PRODUCT_NAME = 'Visualização Modular de Execução das Tarefas do Claude';
 const CHOICE_KEY = 'painel-execucao.transcriptChoice';
 const CONSENT_KEY = 'painel-execucao.geminiConsent';
+const TASK_CONSENT_KEY = 'painel-execucao.geminiTaskConsent.v1';
+const taskRequests = new Set<string>();
 const GEMINI_SECRET = 'painel-execucao.gemini.apiKey';
 const DISCLOSURE = 'Use sua própria chave. Ao solicitar uma explicação, os dados selecionados desta etapa serão enviados ao Gemini. O uso está sujeito às cotas e condições da sua conta.';
 const stateKey = (file: string) => 'painel-execucao.tasks:' + file.toLowerCase();
@@ -127,9 +130,17 @@ export function activate(context: vscode.ExtensionContext) {
     const payload = session
       ? buildPayload(session.model.events, session.state, session.model.report(), session.model.title, path.basename(session.file))
       : buildPayload([], tasks.emptyState(), new TranscriptModel().report(), '', '');
+    const selectedId = session?.state.selectedTaskId;
+    const summaryData = session && selectedId ? buildTaskData(session.model.events, session.state, selectedId, e => session!.model.commentFor(e)) : undefined;
+    const taskSummaryMeta = session && selectedId && summaryData ? {
+      scope: path.basename(session.file) + '|' + selectedId,
+      revision: taskCacheId(session.file, selectedId, summaryData),
+      partial: summaryData.partial, totalEvents: summaryData.totalEvents,
+      includedEvents: summaryData.includedEvents, omittedEvents: summaryData.omittedEvents, truncatedFields: summaryData.truncatedFields,
+    } : null;
     const message = {
       command: 'payload', version,
-      payload: { ...payload, newerSession: newer ? (readTitle(newer.file, newer.size) || path.basename(newer.file)) : '' },
+      payload: { ...payload, taskSummaryMeta, newerSession: newer ? (readTitle(newer.file, newer.size) || path.basename(newer.file)) : '' },
     };
     const signature = JSON.stringify(message);
     if (force || signature !== lastSignature) {
@@ -229,6 +240,43 @@ export function activate(context: vscode.ExtensionContext) {
     }
   };
 
+  const explainWholeTask = async (m: any) => {
+    const selectedSession = session;
+    const taskId = typeof m.taskId === 'string' ? m.taskId : '';
+    const scope = selectedSession ? path.basename(selectedSession.file) + '|' + taskId : '';
+    let revision = typeof m.revision === 'string' ? m.revision : '';
+    let snapshot: Record<string, unknown> | undefined;
+    const reply = (fields: Record<string, unknown>) => void panel?.webview.postMessage({ command:'task-explanation', scope, taskId, revision, meta:snapshot, ...fields });
+    if (!selectedSession || selectedSession.state.selectedTaskId !== taskId) return reply({status:'unsupported'});
+    selectedSession.poll();
+    const data = buildTaskData(selectedSession.model.events,selectedSession.state,taskId,e=>selectedSession.model.commentFor(e));
+    if (!data) return reply({status:'insufficient'});
+    revision = taskCacheId(selectedSession.file,taskId,data);
+    snapshot={partial:data.partial,totalEvents:data.totalEvents,includedEvents:data.includedEvents,omittedEvents:data.omittedEvents,truncatedFields:data.truncatedFields};
+    const apiKey = await context.secrets.get(GEMINI_SECRET);
+    if (!apiKey) return reply({status:'unconfigured'});
+    const cached = gemini.cachedExplanation(revision);
+    if (cached) return reply({status:'ready',text:cached});
+    if (taskRequests.has(revision)) return reply({status:'loading'});
+    taskRequests.add(revision);
+    try {
+      if (!context.globalState.get<boolean>(TASK_CONSENT_KEY)) {
+        const choice = await vscode.window.showWarningMessage(
+          'Explicar a tarefa selecionada com Gemini? Serão enviados o pedido, as ações, entradas, resultados, comentários públicos e respostas desta tarefa, sanitizados e limitados a 48.000 caracteres no total. Outras tarefas e raciocínio interno não são enviados. A sanitização pode não remover todos os dados confidenciais; revise os detalhes antes de enviar. O uso está sujeito às cotas e condições da sua conta.\n\n' +
+          data.includedEvents + ' de ' + data.totalEvents + ' registros selecionados; ' + data.omittedEvents + ' omitidos e ' + data.truncatedFields + ' campos limitados.',
+          {modal:true}, 'Enviar ao Gemini');
+        if (choice !== 'Enviar ao Gemini') return reply({status:'cancelled'});
+        await context.globalState.update(TASK_CONSENT_KEY,true);
+      }
+      reply({status:'loading'});
+      const text = await explainTask(data,apiKey);
+      gemini.storeExplanation(revision,text);
+      reply({status:'ready',text});
+    } catch(error) {
+      reply({status:error instanceof gemini.GeminiError && error.partialText ? 'incomplete' : 'error',text:error instanceof gemini.GeminiError ? error.partialText : '',message:error instanceof gemini.GeminiError ? error.userMessage : 'Não foi possível explicar a tarefa.'});
+    } finally {taskRequests.delete(revision);}
+  };
+
   const onMessage = async (m: any) => {
     if (!m || typeof m !== 'object') return;
     const s = session;
@@ -250,6 +298,7 @@ export function activate(context: vscode.ExtensionContext) {
       case 'geminiSet': await setGeminiKey(); return;
       case 'geminiRemove': await removeGeminiKey(); return;
       case 'explain': await explain(m); return;
+      case 'explainTask': await explainWholeTask(m); return;
     }
     if (!s) return;
     let changed = false;

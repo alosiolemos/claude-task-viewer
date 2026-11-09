@@ -12,6 +12,7 @@ extension/src/
   task-store.ts         Identidade, associação e seleção de tarefas
   view.ts               Dados apresentados ao usuário
   gemini.ts             Contexto sanitizado e chamada opcional ao Gemini
+  task-summary.ts       Contexto restrito à tarefa, limites e validação do resumo
 extension/webview/
   painel.html           HTML, CSS, JavaScript e conectores SVG
 scripts/

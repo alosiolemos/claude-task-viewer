@@ -4,7 +4,7 @@
 
 ## Instalação
 
-1. Baixe **painel-execucao-0.8.3.vsix** nos [Assets da versão 0.8.3](https://github.com/alosiolemos/claude-task-viewer/releases/tag/v0.8.3).
+1. Baixe **painel-execucao-0.9.3.vsix** nos [Assets da versão 0.9.3](https://github.com/alosiolemos/claude-task-viewer/releases/tag/v0.9.3).
 2. No VS Code: **Extensões → … → Instalar a partir do VSIX**.
 3. Selecione o arquivo e recarregue a janela se solicitado.
 4. Abra a pasta em que está trabalhando com o Claude Code.
@@ -80,3 +80,11 @@ Você pode substituir ou remover a chave em Configurações. O modelo implementa
 | Arquivos antigos de captura | A versão atual lê transcrições diretamente. Não é necessário instalar collector.js ou hooks para usar essa versão. |
 
 Para reportar um problema, use as [issues](https://github.com/alosiolemos/claude-task-viewer/issues) com versão, passos e uma captura sem informações confidenciais.
+
+## Explicar toda a tarefa
+
+No cabeçalho, o ícone azul do Gemini gera uma explicação da tarefa selecionada, no painel inferior. Não é necessário selecionar um cartão. São cinco seções para ajudar a entender e aprender com o processo. Os ícones de configurações e nova tarefa continuam à direita; seus nomes aparecem ao passar o mouse ou focar pelo teclado.
+
+Na primeira vez, confirme o envio dos registros da tarefa, incluindo o pedido e as respostas. Somente essa tarefa é considerada; histórico legado não pode ser enviado como tarefa única. A interface informa dados omitidos e campos limitados. O texto é uma interpretação de IA, não uma prova de que o código funciona.
+
+Enquanto gera, aparecem três pontos animados. O prazo do resumo é de até 90 segundos. Respostas interrompidas ou sem as cinco seções são identificadas como incompletas e não ficam em cache como sucesso. Uma nova tentativa depende de clique e pode consumir sua cota. Não há fallback nem novas chamadas automáticas.
