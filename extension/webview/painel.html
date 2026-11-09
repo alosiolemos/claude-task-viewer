@@ -1,525 +1,1025 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Painel Execução</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="{{CSP}}">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visualização Modular de Execução das Tarefas do Claude</title>
+<style>
+:root {
+  --bg: var(--vscode-editor-background, #1f1f1f);
+  --pane: var(--vscode-sideBar-background, #181818);
+  --raised: var(--vscode-editorWidget-background, #252526);
+  --fg: var(--vscode-foreground, #cccccc);
+  --muted: var(--vscode-descriptionForeground, #9d9d9d);
+  --line: var(--vscode-panel-border, #2b2b2b);
+  --edge: var(--vscode-editorLineNumber-foreground, #6e7681);
+  --focus: var(--vscode-focusBorder, #0078d4);
+  --hover: var(--vscode-list-hoverBackground, #2a2d2e);
+  --active: var(--vscode-list-activeSelectionBackground, #04395e);
+  --active-fg: var(--vscode-list-activeSelectionForeground, #ffffff);
+  --ok: var(--vscode-testing-iconPassed, #73c991);
+  --err: var(--vscode-errorForeground, #f48771);
+  --warn: var(--vscode-editorWarning-foreground, #cca700);
+  --btn: var(--vscode-button-background, #0078d4);
+  --btn-fg: var(--vscode-button-foreground, #ffffff);
+  --btn-hover: var(--vscode-button-hoverBackground, #026ec1);
+  --btn2: var(--vscode-button-secondaryBackground, #313131);
+  --btn2-fg: var(--vscode-button-secondaryForeground, #cccccc);
+  --btn2-hover: var(--vscode-button-secondaryHoverBackground, #3c3c3c);
+  --banner: var(--vscode-inputValidation-warningBackground, #352a05);
+  --banner-line: var(--vscode-inputValidation-warningBorder, #b89500);
+  --mono: var(--vscode-editor-font-family, Consolas, 'Courier New', monospace);
+  --font: var(--vscode-font-family, -apple-system, 'Segoe UI', sans-serif);
+  --size: var(--vscode-font-size, 13px);
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--fg); font: var(--size)/1.45 var(--font); overflow: hidden; }
+::selection { background: var(--vscode-editor-selectionBackground, #264f78); }
+:focus-visible { outline: 1px solid var(--focus); outline-offset: 2px; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--vscode-scrollbarSlider-background, rgba(121,121,121,.4)); }
+::-webkit-scrollbar-thumb:hover { background: var(--vscode-scrollbarSlider-hoverBackground, rgba(100,100,100,.7)); }
+svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:disabled { opacity: .5; cursor: default; }
+.btn { display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 2px; padding: 4px 10px; background: var(--btn2); color: var(--btn2-fg); white-space: nowrap; }
+.btn:hover:not(:disabled) { background: var(--btn2-hover); }
+.btn.primary { background: var(--btn); color: var(--btn-fg); }
+.btn.primary:hover:not(:disabled) { background: var(--btn-hover); }
+.icon-btn { display: inline-grid; place-items: center; width: 26px; height: 26px; border: 0; border-radius: 3px; background: transparent; color: var(--fg); flex: none; }
+.icon-btn:hover { background: var(--hover); }
+.chip { display: inline-flex; align-items: center; gap: 5px; padding: 1px 8px; border-radius: 10px; border: 1px solid var(--line); font-size: .86em; color: var(--muted); white-space: nowrap; }
+.chip.on { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 50%, var(--line)); }
+.chip.err { color: var(--err); border-color: color-mix(in srgb, var(--err) 60%, var(--line)); }
+.chip.warn { color: var(--warn); }
 
-    :root {
-      --bg-main: #1e1e1e;
-      --bg-card: #252526;
-      --border-color: #3e3e42;
-      --text-primary: #d4d4d4;
-      --text-secondary: #a0a0a0;
-      --accent: #007acc;
-      --success: #4ec9b0;
-      --error: #ef4444;
-      --warning: #d7ba7d;
-    }
+.app { display: grid; grid-template-rows: auto 1fr; height: 100vh; }
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 10px 16px; border-bottom: 1px solid var(--line); min-width: 0; }
+.session { min-width: 0; flex: 1 1 240px; }
+.session h1 { margin: 0; font-size: 1.1em; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.session p { margin: 2px 0 0; color: var(--muted); font-size: .92em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.current { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; min-width: 0; flex: 0 1 auto; }
+.current .label { color: var(--muted); font-size: .92em; white-space: nowrap; }
+.current strong { font-weight: 600; max-width: 28ch; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-    html { height: 100%; }
-    body {
-      height: 100%;
-      background: var(--bg-main);
-      color: var(--text-primary);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      font-size: 12px;
-      line-height: 1.4;
-    }
+.body { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 0; }
+@media (max-width: 1100px) { .body { grid-template-columns: 190px minmax(0, 1fr); } .legend span:first-child { display: none; } }
 
-    .app {
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
+aside.history { background: var(--pane); border-right: 1px solid var(--line); overflow-y: auto; min-height: 0; }
+.history h2 { margin: 0; padding: 12px 14px 8px; font-size: .85em; font-weight: 600; color: var(--muted); letter-spacing: .02em; }
+.task { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; width: 100%; text-align: left; border: 0; background: transparent; padding: 8px 14px; border-top: 1px solid transparent; }
+.task:hover { background: var(--hover); }
+.task[aria-current="true"] { background: var(--active); color: var(--active-fg); }
+.task .t { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.task .when { color: var(--muted); font-size: .88em; font-variant-numeric: tabular-nums; }
+.task[aria-current="true"] .when, .task[aria-current="true"] .meta { color: inherit; opacity: .85; }
+.task .meta { grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: .88em; }
+.task .receiving { grid-column: 1 / -1; font-size: .85em; color: var(--ok); }
+.task[aria-current="true"] .receiving { color: inherit; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); flex: none; }
+.dot.answered { background: var(--ok); } .dot.running { background: var(--warn); } .dot.no-reply { background: var(--muted); } .dot.legacy { background: transparent; border: 1px solid var(--muted); }
+.history .sep { margin: 10px 14px 4px; font-size: .82em; color: var(--muted); }
 
-    header {
-      padding: 12px 16px;
-      background: var(--bg-card);
-      border-bottom: 1px solid var(--border-color);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-shrink: 0;
-    }
+main.stage { position: relative; display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; min-height: 0; min-width: 0; }
+.toolbar { display: flex; align-items: center; gap: 4px; padding: 6px 10px; border-bottom: 1px solid var(--line); min-width: 0; }
+.toolbar .legend { margin-left: auto; min-width: 0; display: flex; align-items: center; gap: 14px; color: var(--muted); font-size: .88em; white-space: nowrap; overflow: hidden; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend svg { width: 26px; height: 10px; }
+.banners:empty { display: none; }
+.banner { display: flex; gap: 10px; align-items: center; padding: 6px 12px; background: var(--banner); border-bottom: 1px solid var(--banner-line); font-size: .92em; }
+.viewport { position: relative; overflow: hidden; cursor: grab; user-select: none; min-height: 0; background-image: radial-gradient(var(--line) 1px, transparent 1px); background-size: 20px 20px; }
+.viewport.dragging { cursor: grabbing; }
+.world { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.world svg.edges { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+.edges path { fill: none; stroke: var(--edge); stroke-width: 1.5; stroke-dasharray: 5 4; }
+.edges .arrow { fill: var(--edge); stroke: none; }
+.edges rect.parallel { fill: none; stroke: var(--edge); stroke-dasharray: 2 4; stroke-width: 1; rx: 8; }
+.edges text { fill: var(--muted); font: .82em var(--font); }
+.node { position: absolute; width: 216px; height: 76px; display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto 1fr; column-gap: 8px; align-items: start; padding: 9px 11px; text-align: left; background: var(--raised); border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,.25), 0 4px 10px rgba(0,0,0,.12); transition: border-color .12s ease-out, box-shadow .12s ease-out; }
+.node:hover { border-color: var(--edge); }
+.node[aria-pressed="true"] { border-color: var(--focus); box-shadow: 0 0 0 1px var(--focus), 0 4px 12px rgba(0,0,0,.25); }
+.node.error { border-color: color-mix(in srgb, var(--err) 70%, var(--line)); }
+.node .ic { grid-row: 1 / 3; margin-top: 2px; color: var(--muted); }
+.node.kind-prompt .ic, .node.kind-reply .ic { color: var(--focus); }
+.node .nt { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.node .ns { color: var(--muted); font-size: .92em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.node .st { grid-column: 1 / -1; align-self: end; display: flex; align-items: center; gap: 5px; font-size: .82em; color: var(--muted); font-variant-numeric: tabular-nums; }
+.node .st svg { width: 12px; height: 12px; }
+.st.ok svg { color: var(--ok); } .st.error { color: var(--err); } .st.pending { color: var(--warn); }
+.node.fresh { animation: arrive .45s cubic-bezier(.16,1,.3,1); }
+@keyframes arrive { from { opacity: .35; transform: translateY(6px); } }
+@media (prefers-reduced-motion: reduce) { .node.fresh { animation: none; } .node { transition: none; } }
+.earlier { position: absolute; }
+.empty { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; color: var(--muted); padding: 24px; }
+.empty div { max-width: 46ch; }
+.empty strong { display: block; color: var(--fg); margin-bottom: 6px; font-size: 1.05em; }
+.summary { padding: 8px 14px; border-top: 1px solid var(--line); color: var(--muted); font-size: .92em; }
 
-    header h1 {
-      font-size: 14px;
-      font-weight: 600;
-      flex: 1;
-    }
+/* Bottom details dock */
+.dock { display: grid; grid-template-rows: auto minmax(0, 1fr); height: 300px; min-height: 0; background: var(--pane); border-top: 1px solid var(--line); position: relative; }
+.dock.collapsed { height: auto !important; grid-template-rows: auto; }
+.dock.collapsed .dock-body, .dock.collapsed .grip { display: none; }
+.grip { position: absolute; left: 0; right: 0; top: -4px; height: 8px; cursor: row-resize; z-index: 2; }
+.grip:hover, .grip:focus-visible { background: color-mix(in srgb, var(--focus) 35%, transparent); }
+.dock-head { display: flex; align-items: center; gap: 10px; padding: 8px 12px 8px 16px; min-width: 0; border-bottom: 1px solid var(--line); }
+.dock-head h2 { margin: 0; font-size: 1.02em; font-weight: 600; flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dock-head .dock-icon { color: var(--muted); display: inline-flex; }
+.dock-head .chevron { transition: transform .15s ease-out; }
+.dock.collapsed .dock-head .chevron { transform: rotate(180deg); }
+.dock-body { overflow: auto; min-height: 0; padding: 12px 16px 16px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-content: start; }
+.dock-body .wide { grid-column: 1 / -1; }
+.dock-file { flex: 0 1 auto; min-width: 0; max-width: 28ch; color: var(--muted); font-size: .92em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cols3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: start; }
+@media (max-width: 760px) { .cols3 { grid-template-columns: minmax(0, 1fr); } }
+.cols3 .block { min-width: 0; }
+.item-label { margin: 8px 0 2px; color: var(--muted); font-size: .86em; }
+.item-label:first-of-type { margin-top: 0; }
+.file-name { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.res-label { margin: 0 0 4px; font-weight: 600; font-size: .92em; }
+.res-label.err { color: var(--err); }
+.res-sub { margin: 10px 0 2px; color: var(--muted); font-size: .86em; }
+details.path, details.more-comment { margin-top: 6px; }
+details.path summary, details.more-comment summary { cursor: pointer; color: var(--muted); font-size: .9em; }
+.path-text { display: block; margin: 6px 0; font: .92em/1.5 var(--mono); overflow-wrap: anywhere; }
+.comment .quote { margin: 0; padding: 8px 12px; background: var(--bg); border-radius: 3px; }
+.comment .quote .prose { max-width: 72ch; }
+.comment .quote p { margin: 0; }
+.block { min-width: 0; background: var(--raised); border: 1px solid var(--line); border-radius: 5px; padding: 10px 12px; }
+.block h3 { margin: 0 0 6px; font-size: .84em; font-weight: 600; color: var(--muted); }
+.block.error h3 { color: var(--err); }
+.block.error { border-color: color-mix(in srgb, var(--err) 60%, var(--line)); }
+.prose { margin: 0; max-width: 72ch; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.55; }
+.lead { font-size: 1.04em; }
+pre { margin: 0; padding: 8px 10px; max-height: 38vh; overflow: auto; background: var(--bg); border: 1px solid var(--line); border-radius: 3px; font: .92em/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
+.more { margin-top: 6px; }
+.note { color: var(--muted); font-size: .9em; margin: 0; overflow-wrap: anywhere; }
+.ai-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+.ai-head h3 { margin: 0; }
+.ai-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 10px 18px; }
+.ai-sec h4 { margin: 0 0 3px; font-size: .95em; font-weight: 600; }
+.ai-actions { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+details.tech { border: 1px solid var(--line); border-radius: 5px; padding: 8px 12px; }
+details.tech summary { cursor: pointer; color: var(--muted); font-size: .9em; }
+details.tech pre { margin-top: 8px; }
+details.fold { min-width: 0; }
+details.fold + details.fold, .item-label + details.fold, details.fold + .item-label { margin-top: 8px; }
+details.fold > summary { list-style: none; display: flex; align-items: center; gap: 6px; padding: 3px 0; cursor: pointer; font-weight: 600; font-size: .92em; user-select: none; min-width: 0; }
+details.fold > summary::-webkit-details-marker { display: none; }
+details.fold > summary:focus-visible { outline: 1px solid var(--focus); outline-offset: 2px; border-radius: 2px; }
+details.fold > summary .fold-title { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+details.fold > .fold-body { padding: 4px 0 2px; }
+svg.chev { width: 14px; height: 14px; flex: none; color: var(--muted); transform: rotate(-90deg); transition: transform .15s ease-out; }
+details[open] > summary > svg.chev { transform: none; }
+svg.brand { width: 18px; height: 18px; flex: none; }
+.fold-head { display: flex; align-items: center; gap: 6px; padding: 3px 0; font-weight: 600; font-size: .92em; }
+.fold-head .fold-title { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.body.no-tasks { grid-template-columns: minmax(0, 1fr); }
+aside.history[hidden] { display: none !important; }
+.fold-line { display: flex; align-items: center; gap: 6px; min-width: 0; flex: 1 1 auto; }
+.fold-main { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; flex: 1 1 auto; }
+.ai-fold .fold-main > .fold-line { align-self: stretch; }
+.sub-id { font-size: .82em; font-weight: 600; }
+.sub-id.on { color: var(--ok); }
+.tip { position: relative; display: inline-flex; flex: none; }
+button.info { display: inline-grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--muted); }
+button.info:hover, button.info[aria-expanded="true"] { color: var(--fg); }
+button.info:focus-visible { outline: 1px solid var(--focus); outline-offset: 2px; }
+svg.info-ic { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; }
+.tip-text { display: none; position: absolute; z-index: 20; right: 0; top: calc(100% + 6px); width: min(340px, 72vw); padding: 8px 10px; border-radius: 4px; background: var(--vscode-editorHoverWidget-background, #252526); color: var(--vscode-editorHoverWidget-foreground, var(--fg)); border: 1px solid var(--vscode-editorHoverWidget-border, var(--line)); box-shadow: 0 4px 12px rgba(0,0,0,.35); font-size: .92em; font-weight: 400; line-height: 1.45; white-space: normal; text-align: left; cursor: default; }
+.tip.open .tip-text, .tip:hover .tip-text, .tip:has(:focus-visible) .tip-text { display: block; }
+section.comment { background: color-mix(in srgb, #D97757 10%, var(--raised)); border-color: color-mix(in srgb, #D97757 60%, var(--line)); }
+section.ai-block { background: color-mix(in srgb, #4285F4 10%, var(--raised)); border-color: color-mix(in srgb, #4285F4 60%, var(--line)); }
+details.col-group > .fold-body { padding: 6px 0 2px; }
+@media (prefers-reduced-motion: reduce) { svg.chev { transition: none; } }
+.comment-fold > summary, .ai-fold > summary { color: var(--fg); }
 
-    header button {
-      padding: 4px 12px;
-      background: var(--accent);
-      color: white;
-      border: none;
-      border-radius: 3px;
-      font-size: 11px;
-      cursor: pointer;
-      transition: opacity 0.2s;
-    }
-
-    header button:hover {
-      opacity: 0.8;
-    }
-
-    header button.secondary {
-      background: transparent;
-      border: 1px solid var(--border-color);
-      color: var(--text-primary);
-    }
-
-    .container {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-    }
-
-    .sidebar {
-      width: 200px;
-      border-right: 1px solid var(--border-color);
-      background: var(--bg-card);
-      overflow-y: auto;
-      flex-shrink: 0;
-    }
-
-    .sidebar-header {
-      padding: 8px 12px;
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      color: var(--text-secondary);
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    .task-item {
-      padding: 8px 12px;
-      border-left: 3px solid transparent;
-      cursor: pointer;
-      transition: background 0.15s;
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    .task-item:hover {
-      background: rgba(255, 255, 255, 0.05);
-    }
-
-    .task-item.active {
-      background: var(--accent);
-      border-left-color: white;
-      color: white;
-    }
-
-    .task-item-title {
-      font-weight: 500;
-      margin-bottom: 2px;
-    }
-
-    .task-item-meta {
-      font-size: 10px;
-      opacity: 0.6;
-    }
-
-    .task-item-state {
-      display: inline-block;
-      font-size: 9px;
-      padding: 2px 4px;
-      margin-top: 4px;
-      border-radius: 2px;
-    }
-
-    .task-item-state.running {
-      background: rgba(215, 186, 125, 0.2);
-      color: var(--warning);
-    }
-
-    .task-item-state.completed {
-      background: rgba(78, 201, 176, 0.2);
-      color: var(--success);
-    }
-
-    .task-item-state.failed {
-      background: rgba(239, 68, 68, 0.2);
-      color: var(--error);
-    }
-
-    .main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    .workflow {
-      flex: 1;
-      padding: 16px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .action-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 4px;
-      padding: 12px;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex;
-      gap: 12px;
-    }
-
-    .action-card:hover {
-      border-color: var(--accent);
-      box-shadow: 0 0 8px rgba(0, 122, 204, 0.2);
-    }
-
-    .action-card.selected {
-      border-color: var(--accent);
-      background: rgba(0, 122, 204, 0.1);
-    }
-
-    .action-icon {
-      font-size: 18px;
-      flex-shrink: 0;
-      width: 24px;
-      text-align: center;
-    }
-
-    .action-content {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .action-title {
-      font-weight: 500;
-      margin-bottom: 4px;
-    }
-
-    .action-detail {
-      font-size: 11px;
-      color: var(--text-secondary);
-      word-break: break-word;
-    }
-
-    .action-state {
-      font-size: 10px;
-      padding: 2px 6px;
-      border-radius: 2px;
-      background: rgba(78, 201, 176, 0.2);
-      color: var(--success);
-      display: inline-block;
-      margin-top: 4px;
-    }
-
-    .action-state.error {
-      background: rgba(239, 68, 68, 0.2);
-      color: var(--error);
-    }
-
-    .inspector {
-      width: 300px;
-      border-left: 1px solid var(--border-color);
-      background: var(--bg-card);
-      overflow-y: auto;
-      flex-shrink: 0;
-      padding: 12px;
-    }
-
-    .inspector-empty {
-      color: var(--text-secondary);
-      text-align: center;
-      padding: 20px;
-    }
-
-    .inspector h2 {
-      font-size: 12px;
-      margin-bottom: 8px;
-      text-transform: uppercase;
-      border-bottom: 1px solid var(--border-color);
-      padding-bottom: 4px;
-    }
-
-    .inspector-section {
-      margin-bottom: 16px;
-    }
-
-    .inspector-section-title {
-      font-size: 10px;
-      font-weight: 600;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      margin-bottom: 4px;
-    }
-
-    .inspector-content {
-      font-family: 'Courier New', monospace;
-      font-size: 10px;
-      background: var(--bg-main);
-      padding: 8px;
-      border-radius: 2px;
-      border: 1px solid var(--border-color);
-      max-height: 200px;
-      overflow-y: auto;
-      word-break: break-all;
-      white-space: pre-wrap;
-    }
-
-    .summary {
-      padding: 12px 16px;
-      border-top: 1px solid var(--border-color);
-      background: var(--bg-card);
-      font-size: 11px;
-      color: var(--text-secondary);
-      flex-shrink: 0;
-    }
-
-    .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      color: var(--text-secondary);
-      text-align: center;
-    }
-
-    ::-webkit-scrollbar {
-      width: 8px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: var(--bg-main);
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: var(--border-color);
-      border-radius: 4px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      background: var(--text-secondary);
-    }
-  </style>
+/* Settings dialog */
+dialog.settings { width: min(560px, 92vw); padding: 0; border: 1px solid var(--line); border-radius: 6px; background: var(--raised); color: var(--fg); }
+dialog.settings::backdrop { background: rgba(0,0,0,.45); }
+dialog.settings header { border-bottom: 1px solid var(--line); padding: 10px 14px; }
+dialog.settings h2 { margin: 0; font-size: 1.05em; flex: 1; }
+.dlg-sec { padding: 14px; display: grid; gap: 10px; }
+.dlg-sec h3 { margin: 0; font-size: 1em; }
+.dlg-sec p { margin: 0; max-width: 70ch; overflow-wrap: anywhere; }
+.dlg-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.dlg-foot { display: flex; justify-content: flex-end; padding: 10px 14px; border-top: 1px solid var(--line); }
+</style>
 </head>
 <body>
-  <div class="app">
-    <header>
-      <h1>📊 Painel Execução</h1>
-      <button class="secondary" id="refreshBtn">Atualizar</button>
-      <button id="newTaskBtn">+ Nova tarefa</button>
-      <button class="secondary" id="continueBtn">Continuar</button>
-    </header>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-read" viewBox="0 0 24 24"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></symbol>
+  <symbol id="i-write" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 12v6M9 15h6"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></symbol>
+  <symbol id="i-terminal" viewBox="0 0 24 24"><path d="m4 17 6-6-6-6"/><path d="M12 19h8"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="i-files" viewBox="0 0 24 24"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2z"/></symbol>
+  <symbol id="i-web" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"/></symbol>
+  <symbol id="i-agent" viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M2 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2"/><path d="M16 3.1a4 4 0 0 1 0 7.8M22 21v-2a4 4 0 0 0-3-3.9"/></symbol>
+  <symbol id="i-skill" viewBox="0 0 24 24"><path d="m12 2 10 5-10 5L2 7z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="m3 7 2 2 4-4M3 17l2 2 4-4M13 6h8M13 12h8M13 18h8"/></symbol>
+  <symbol id="i-question" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/></symbol>
+  <symbol id="i-tool" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M5 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2"/></symbol>
+  <symbol id="i-reply" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="i-fit" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="i-latest" viewBox="0 0 24 24"><path d="M3 12h14M11 6l6 6-6 6M21 5v14"/></symbol>
+  <symbol id="i-rename" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24"><path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/></symbol>
+  <symbol id="i-sidebar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v5.5M12 7.6h.01"/></symbol>
+  <linearGradient id="gemini-grad" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#4285F4"/><stop offset="1" stop-color="#1A73E8"/></linearGradient>
+  <symbol id="logo-gemini" viewBox="0 0 24 24"><path fill="url(#gemini-grad)" d="M12 2C12.6 7.5 16.5 11.4 22 12C16.5 12.6 12.6 16.5 12 22C11.4 16.5 7.5 12.6 2 12C7.5 11.4 11.4 7.5 12 2Z"/></symbol>
+  <symbol id="logo-claude" viewBox="0 0 24 24"><g fill="#D97757"><rect x="10.9" y="2" width="2.2" height="8.6" rx="1.1"/><rect x="10.9" y="2" width="2.2" height="8.6" rx="1.1" transform="rotate(45 12 12)"/><rect x="10.9" y="2" width="2.2" height="8.6" rx="1.1" transform="rotate(90 12 12)"/><rect x="10.9" y="2" width="2.2" height="8.6" rx="1.1" transform="rotate(135 12 12)"/><rect x="10.9" y="2" width="2.2" height="8.6" rx="1.1" transform="rotate(180 12 12)"/><rect x="10.9" y="2" width="2.2" height="8.6" rx="1.1" transform="rotate(225 12 12)"/><rect x="10.9" y="2" width="2.2" height="8.6" rx="1.1" transform="rotate(270 12 12)"/><rect x="10.9" y="2" width="2.2" height="8.6" rx="1.1" transform="rotate(315 12 12)"/></g></symbol>
+</svg>
 
-    <div class="container">
-      <div class="sidebar">
-        <div class="sidebar-header">Histórico</div>
-        <div id="taskList"></div>
-      </div>
-
-      <div class="main">
-        <div class="workflow" id="workflow"></div>
-        <div class="summary" id="summary"></div>
-      </div>
-
-      <div class="inspector" id="inspector">
-        <div class="inspector-empty">Clique em uma ação para ver detalhes</div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    const vscode = acquireVsCodeApi?.() || null;
-    let tasks = [];
-    let selectedTaskId = null;
-    let selectedActionIndex = null;
-
-    function renderUI() {
-      renderTaskList();
-      renderWorkflow();
-      renderSummary();
-    }
-
-    function renderTaskList() {
-      const list = document.getElementById('taskList');
-      list.innerHTML = tasks
-        .map(task => `
-          <div class="task-item ${task.id === selectedTaskId ? 'active' : ''}" onclick="selectTask('${task.id}')">
-            <div class="task-item-title">${escapeHtml(task.title)}</div>
-            <div class="task-item-meta">${task.actions.length} ações</div>
-            <div class="task-item-state ${task.state}">${task.state === 'running' ? '⏱️ Em execução' : task.state === 'completed' ? '✅ Concluída' : '❌ Erro'}</div>
+<div class="app">
+  <header>
+    <div class="session"><h1 id="productName">Visualização Modular de Execução das Tarefas do Claude</h1><p id="sessionLine">Carregando transcrição…</p></div>
+    <button class="btn" id="chooseSession" title="Escolher outra sessão do Claude deste projeto"><svg class="i"><use href="#i-swap"/></svg>Trocar sessão</button>
+    <div class="current" id="current"></div>
+  </header>
+  <div class="body">
+    <aside class="history" id="taskPane" aria-label="Histórico de tarefas"><h2>Tarefas</h2><div id="tasks"></div></aside>
+    <main class="stage">
+      <div>
+        <div class="toolbar">
+          <button class="btn" id="tasksToggle" aria-controls="taskPane" aria-expanded="true"><svg class="i"><use href="#i-sidebar"/></svg><span id="tasksToggleLabel">Ocultar tarefas</span></button>
+          <button class="icon-btn" id="zoomOut" title="Diminuir zoom"><svg class="i"><use href="#i-minus"/></svg></button>
+          <button class="icon-btn" id="zoomIn" title="Aumentar zoom"><svg class="i"><use href="#i-plus"/></svg></button>
+          <button class="btn" id="fit"><svg class="i"><use href="#i-fit"/></svg>Ajustar à tela</button>
+          <button class="btn" id="latest" title="Acompanhar as ações mais recentes"><svg class="i"><use href="#i-latest"/></svg>Mais recente</button>
+          <div class="legend">
+            <span><svg viewBox="0 0 26 10"><path d="M1 5h20" stroke="currentColor" stroke-dasharray="5 4" stroke-width="1.5"/><path d="M20 1l5 4-5 4z" fill="currentColor"/></svg>Ordem observada (não indica dependência)</span>
+            <span><svg viewBox="0 0 26 10"><rect x="1" y="1" width="24" height="8" rx="3" fill="none" stroke="currentColor" stroke-dasharray="2 3"/></svg>Em paralelo</span>
           </div>
-        `)
-        .join('');
-    }
-
-    function renderWorkflow() {
-      const workflow = document.getElementById('workflow');
-      const task = tasks.find(t => t.id === selectedTaskId);
-
-      if (!task) {
-        workflow.innerHTML = '<div class="empty-state"><p>Nenhuma tarefa selecionada</p></div>';
-        return;
-      }
-
-      workflow.innerHTML = task.actions
-        .map((action, idx) => `
-          <div class="action-card ${idx === selectedActionIndex ? 'selected' : ''}" onclick="selectAction(${idx})">
-            <div class="action-icon">${getActionIcon(action.type, action.toolName)}</div>
-            <div class="action-content">
-              <div class="action-title">${action.description}</div>
-              ${action.filePath ? `<div class="action-detail">📄 ${escapeHtml(action.filePath.split(/[\\\\/]/).pop())}</div>` : ''}
-              <div class="action-state ${action.error ? 'error' : ''}">${action.error ? '❌ Erro' : '✅ Sucesso'}</div>
-            </div>
-          </div>
-        `)
-        .join('');
-    }
-
-    function renderSummary() {
-      const summary = document.getElementById('summary');
-      const task = tasks.find(t => t.id === selectedTaskId);
-
-      if (!task || !task.actions.length) {
-        summary.innerHTML = '';
-        return;
-      }
-
-      const toolCount = task.actions.filter(a => a.toolName).length;
-      const errorCount = task.actions.filter(a => a.error).length;
-
-      summary.innerHTML = `
-        ${toolCount} ação(ões) ${errorCount > 0 ? `· ${errorCount} erro(s)` : '· sem erros'}
-      `;
-    }
-
-    function selectTask(taskId) {
-      selectedTaskId = taskId;
-      selectedActionIndex = null;
-      renderUI();
-      updateInspector();
-    }
-
-    function selectAction(idx) {
-      selectedActionIndex = idx;
-      renderWorkflow();
-      updateInspector();
-    }
-
-    function updateInspector() {
-      const inspector = document.getElementById('inspector');
-      const task = tasks.find(t => t.id === selectedTaskId);
-
-      if (!task || selectedActionIndex === null) {
-        inspector.innerHTML = '<div class="inspector-empty">Clique em uma ação para ver detalhes</div>';
-        return;
-      }
-
-      const action = task.actions[selectedActionIndex];
-
-      let html = `
-        <h2>${action.description}</h2>
-        <div class="inspector-section">
-          <div class="inspector-section-title">Ferramenta</div>
-          <div class="inspector-content">${action.toolName || 'N/A'}</div>
         </div>
-      `;
+        <div class="banners" id="banners"></div>
+      </div>
+      <div class="viewport" id="viewport" tabindex="-1">
+        <div class="world" id="world"><svg class="edges" id="edges"></svg></div>
+        <div class="empty" id="empty" hidden></div>
+      </div>
+      <section class="dock" id="dock" aria-labelledby="dockTitle" hidden>
+        <div class="grip" id="grip" role="separator" aria-orientation="horizontal" aria-label="Redimensionar detalhes" tabindex="0"></div>
+        <header class="dock-head">
+          <span class="dock-icon" id="dockIcon"></span>
+          <h2 id="dockTitle"></h2>
+          <span class="dock-file" id="dockFile" hidden></span>
+          <span class="chip" id="dockState"></span>
+          <button class="icon-btn" id="dockCollapse" aria-expanded="true" title="Recolher detalhes"><svg class="i chevron"><use href="#i-chevron"/></svg></button>
+          <button class="icon-btn" id="dockClose" title="Fechar detalhes" aria-label="Fechar detalhes"><svg class="i"><use href="#i-close"/></svg></button>
+        </header>
+        <div class="dock-body" id="dockBody"></div>
+      </section>
+      <div class="summary" id="summary"></div>
+    </main>
+  </div>
+</div>
 
-      if (action.filePath) {
-        html += `
-          <div class="inspector-section">
-            <div class="inspector-section-title">Arquivo</div>
-            <div class="inspector-content">${escapeHtml(action.filePath)}</div>
-          </div>
-        `;
-      }
+<dialog class="settings" id="settings" aria-labelledby="settingsTitle">
+  <form method="dialog">
+    <header class="dock-head">
+      <h2 id="settingsTitle">Configurações</h2>
+      <button class="icon-btn" value="close" aria-label="Fechar configurações" title="Fechar"><svg class="i"><use href="#i-close"/></svg></button>
+    </header>
+    <section class="dlg-sec">
+      <h3>Gemini (opcional)</h3>
+      <p><span class="chip" id="geminiStatus">Não configurado</span></p>
+      <p>Use sua própria chave. Ao solicitar uma explicação, os dados selecionados desta etapa serão enviados ao Gemini. O uso está sujeito às cotas e condições da sua conta.</p>
+      <p class="note">Sem chave, o painel funciona normalmente. A chave fica no armazenamento seguro do VS Code: não aparece aqui, nos registros nem no repositório.</p>
+      <div class="dlg-actions">
+        <button type="button" class="btn primary" id="geminiSet">Adicionar chave</button>
+        <button type="button" class="btn" id="geminiRemove" disabled>Remover chave</button>
+      </div>
+    </section>
+    <footer class="dlg-foot"><button class="btn" value="close">Fechar</button></footer>
+  </form>
+</dialog>
 
-      if (action.input) {
-        html += `
-          <div class="inspector-section">
-            <div class="inspector-section-title">Entrada</div>
-            <div class="inspector-content">${formatJson(action.input)}</div>
-          </div>
-        `;
-      }
+<script nonce="{{NONCE}}">
+(() => {
+  const vscode = typeof acquireVsCodeApi === 'function' ? acquireVsCodeApi() : null;
+  const post = message => vscode && vscode.postMessage(message);
+  const W = 216, H = 76, GX = 64, GY = 18, PAD = 40, TOP = 56, WINDOW = 150;
+  const LIMIT = 20000;
+  const SECTIONS = ['O que foi feito?', 'Qual foi o resultado?', 'O que isso significa?'];
+  const persisted = (vscode && vscode.getState()) || {};
+  const ui = {
+    payload: null,
+    views: persisted.views || {},
+    selectedNode: persisted.selectedNode || {},
+    dock: Object.assign({ h: 300, collapsed: false }, persisted.dock || {}),
+    open: persisted.open || {},
+    tasksHidden: !!persisted.tasksHidden,
+    detailsKey: null, detailsSig: '', detailsJson: '', details: null,
+    explain: {},
+    gemini: { configured: false },
+    rendered: new Map(),
+    knownKeys: new Set(),
+    bounds: null,
+  };
+  const save = () => vscode && vscode.setState({ views: ui.views, selectedNode: ui.selectedNode, dock: ui.dock, open: ui.open, tasksHidden: ui.tasksHidden });
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  // Open/closed choice per step and section. Defaults apply only while the user has not chosen.
+  function openState(stepKey, id, dflt) {
+    const s = stepKey && ui.open[stepKey];
+    return s && typeof s[id] === 'boolean' ? s[id] : dflt;
+  }
+  function setOpenState(stepKey, id, value) {
+    if (!stepKey) return;
+    ui.open[stepKey] = Object.assign({}, ui.open[stepKey], { [id]: value });
+    save();
+  }
+  function brandIcon(id) {
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('class', 'brand');
+    svg.setAttribute('aria-hidden', 'true');
+    const use = document.createElementNS(SVG_NS, 'use');
+    use.setAttribute('href', '#' + id);
+    svg.appendChild(use);
+    return svg;
+  }
+  // Native <details>: keyboard and screen readers work without extra code; only the state is stored.
+  function fold(stepKey, id, dflt, summaryParts, bodyChildren, cls) {
+    const det = el('details', 'fold' + (cls ? ' ' + cls : ''));
+    const sum = el('summary');
+    sum.append(icon('chevron', 'chev'), ...summaryParts);
+    const body = el('div', 'fold-body');
+    body.append(...bodyChildren);
+    det.append(sum, body);
+    det.open = openState(stepKey, id, dflt);
+    det.addEventListener('toggle', () => setOpenState(stepKey, id, det.open));
+    return det;
+  }
+  const $ = id => document.getElementById(id);
 
-      if (action.output) {
-        html += `
-          <div class="inspector-section">
-            <div class="inspector-section-title">Saída</div>
-            <div class="inspector-content">${formatJson(action.output)}</div>
-          </div>
-        `;
-      }
+  function el(tag, cls, text) {
+    const node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text !== undefined && text !== null) node.textContent = String(text);
+    return node;
+  }
+  function icon(name, cls) {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('class', 'i' + (cls ? ' ' + cls : ''));
+    const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+    use.setAttribute('href', '#i-' + name);
+    svg.appendChild(use);
+    return svg;
+  }
+  function button(cls, label, iconName, onClick, title) {
+    const b = el('button', cls);
+    if (iconName) b.appendChild(icon(iconName));
+    if (label) b.appendChild(document.createTextNode(label));
+    if (title) b.title = title;
+    b.addEventListener('click', onClick);
+    return b;
+  }
+  const fmtTime = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }); };
+  const fmtWhen = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); };
+  const STATE = { answered: 'Respondida', running: 'Em andamento', 'no-reply': 'Sem resposta final', empty: 'Aguardando ações', legacy: 'Antes do painel' };
+  const STATUS = { ok: ['check', 'Concluída'], error: ['x', 'Erro registrado'], pending: ['clock', 'Sem resultado ainda'] };
+  const nodeSig = n => [n.title, n.subtitle, n.status, n.time].join('|');
 
-      if (action.error) {
-        html += `
-          <div class="inspector-section">
-            <div class="inspector-section-title">Erro</div>
-            <div class="inspector-content" style="color: var(--error);">${escapeHtml(action.error)}</div>
-          </div>
-        `;
-      }
+  function view(taskId) {
+    if (!ui.views[taskId]) ui.views[taskId] = { x: 0, y: 0, k: 1, follow: true, showAll: false };
+    return ui.views[taskId];
+  }
 
-      inspector.innerHTML = html;
+  // ---------- header, settings and history ----------
+  function renderHeader(p) {
+    $('sessionLine').textContent = (p.sessionTitle ? 'Sessão: ' + p.sessionTitle : 'Sessão sem título') + (p.transcriptFile ? ' · ' + p.transcriptFile : '');
+    $('sessionLine').title = $('sessionLine').textContent;
+    const current = $('current');
+    current.replaceChildren();
+    const active = p.tasks.find(t => t.id === p.activeTaskId);
+    const selected = p.tasks.find(t => t.id === p.selectedTaskId);
+    if (active) {
+      current.append(el('span', 'label', 'Tarefa atual'), el('strong', '', active.title));
+      current.lastChild.title = active.title;
+    } else {
+      current.append(el('span', 'label', 'Nenhuma tarefa atual: a próxima ação inicia uma'));
     }
-
-    function getActionIcon(type, toolName) {
-      if (toolName === 'Read') return '📖';
-      if (toolName === 'Write') return '✍️';
-      if (toolName === 'Edit') return '✏️';
-      if (toolName === 'Bash') return '⌨️';
-      if (toolName === 'Grep') return '🔍';
-      if (type === 'user-input') return '👤';
-      return '⚙️';
+    if (selected && !selected.legacy && selected.id !== p.activeTaskId) {
+      current.append(button('btn', 'Continuar esta tarefa', null, () => post({ command: 'continueTask', taskId: selected.id }), 'As próximas ações do Claude entram na tarefa que você está vendo'));
     }
-
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
+    if (selected && !selected.legacy) {
+      current.append(button('icon-btn', '', 'rename', () => post({ command: 'renameTask', taskId: selected.id }), 'Renomear a tarefa exibida'));
     }
+    current.append(button('btn', 'Configurações', 'gear', openSettings, 'Configurações (Gemini opcional)'));
+    current.append(button('btn primary', 'Nova tarefa', 'plus', () => post({ command: 'newTask' }), 'As próximas ações do Claude entram em uma nova tarefa'));
+  }
 
-    function formatJson(obj) {
-      if (!obj) return 'N/A';
-      if (typeof obj === 'string') return escapeHtml(obj.slice(0, 500));
-      try {
-        return escapeHtml(JSON.stringify(obj, null, 2).slice(0, 500));
-      } catch {
-        return escapeHtml(String(obj).slice(0, 500));
+  function openSettings() {
+    renderGeminiStatus();
+    if (!$('settings').open) $('settings').showModal();
+  }
+  function renderGeminiStatus() {
+    const on = ui.gemini.configured;
+    const chip = $('geminiStatus');
+    chip.textContent = on ? 'Configurado' : 'Não configurado';
+    chip.className = 'chip ' + (on ? 'on' : '');
+    $('geminiSet').textContent = on ? 'Substituir chave' : 'Adicionar chave';
+    $('geminiRemove').disabled = !on;
+  }
+  $('geminiSet').addEventListener('click', () => post({ command: 'geminiSet' }));
+  $('geminiRemove').addEventListener('click', () => post({ command: 'geminiRemove' }));
+
+  function renderTasks(p) {
+    const box = $('tasks');
+    box.replaceChildren();
+    if (!p.tasks.length) { box.append(el('p', 'note', 'Nenhuma tarefa ainda.')); return; }
+    let legacyShown = false;
+    for (const t of p.tasks) {
+      if (t.legacy && !legacyShown) { box.append(el('div', 'sep', 'Histórico legado')); legacyShown = true; }
+      const b = el('button', 'task');
+      b.setAttribute('aria-current', String(t.id === p.selectedTaskId));
+      const title = el('span', 't', t.title); title.title = t.title;
+      b.append(title, el('span', 'when', fmtWhen(t.lastTime || t.firstTime)));
+      const meta = el('span', 'meta');
+      meta.append(el('span', 'dot ' + t.state), document.createTextNode(STATE[t.state] + ' · ' + t.actions + (t.actions === 1 ? ' ação' : ' ações') + (t.failures ? ' · ' + t.failures + (t.failures === 1 ? ' com erro' : ' com erro') : '')));
+      b.append(meta);
+      if (t.active) b.append(el('span', 'receiving', 'Recebendo as próximas ações'));
+      b.addEventListener('click', () => post({ command: 'selectTask', taskId: t.id }));
+      box.append(b);
+    }
+  }
+
+  function renderBanners(p) {
+    const box = $('banners');
+    box.replaceChildren();
+    for (const w of p.warnings || []) box.append(el('div', 'banner', w));
+    if (p.newerSession) {
+      const b = el('div', 'banner', 'Há uma sessão mais recente neste projeto: ' + p.newerSession + '.');
+      b.append(button('btn', 'Abrir', null, () => post({ command: 'openNewer' })));
+      box.append(b);
+    }
+  }
+
+  // ---------- canvas ----------
+  function columns(nodes) {
+    const cols = [];
+    for (const n of nodes) {
+      const last = cols[cols.length - 1];
+      if (last && n.kind === 'action' && last[0].kind === 'action' && last[0].group === n.group) last.push(n);
+      else cols.push([n]);
+    }
+    return cols;
+  }
+  const colX = i => PAD + i * (W + GX);
+  const rowY = j => TOP + j * (H + GY);
+
+  function renderCanvas(p) {
+    const taskId = p.selectedTaskId;
+    const world = $('world'), edges = $('edges'), empty = $('empty');
+    const nodes = p.nodes || [];
+    const v = taskId ? view(taskId) : null;
+    if (!nodes.length) {
+      for (const [, e] of ui.rendered) e.remove();
+      ui.rendered.clear();
+      edges.replaceChildren();
+      empty.hidden = false;
+      empty.replaceChildren();
+      const box = el('div');
+      if (!p.transcriptFile) {
+        box.append(el('strong', '', 'Nenhuma transcrição encontrada'), el('span', '', 'Escolha a pasta onde o Claude Code guarda as transcrições deste projeto.'));
+        box.append(el('br'), el('br'), button('btn primary', 'Escolher pasta de transcrições', null, () => post({ command: 'chooseFolder' })));
+      } else if (!taskId) {
+        box.append(el('strong', '', 'Nenhuma tarefa selecionada'), el('span', '', 'Quando o Claude agir neste projeto, as ações aparecem aqui automaticamente.'));
+      } else {
+        box.append(el('strong', '', 'Aguardando ações nesta tarefa'), el('span', '', 'As próximas ações do Claude aparecerão aqui sem recarregar o painel.'));
+      }
+      empty.append(box);
+      return;
+    }
+    empty.hidden = true;
+    const cols = columns(nodes);
+    const first = v.showAll ? 0 : Math.max(0, cols.length - WINDOW);
+    const keep = new Set();
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const parts = [];
+    let maxRows = 1;
+    const selectedKey = ui.selectedNode[taskId];
+
+    const defs = document.createElementNS(svgNS, 'defs');
+    const marker = document.createElementNS(svgNS, 'marker');
+    marker.setAttribute('id', 'arrow'); marker.setAttribute('viewBox', '0 0 8 8'); marker.setAttribute('refX', '7'); marker.setAttribute('refY', '4');
+    marker.setAttribute('markerWidth', '7'); marker.setAttribute('markerHeight', '7'); marker.setAttribute('orient', 'auto');
+    const tip = document.createElementNS(svgNS, 'path'); tip.setAttribute('d', 'M0 0 8 4 0 8z'); tip.setAttribute('class', 'arrow');
+    marker.appendChild(tip); defs.appendChild(marker); parts.push(defs);
+
+    for (let i = first; i < cols.length; i++) {
+      const col = cols[i];
+      maxRows = Math.max(maxRows, col.length);
+      if (col.length > 1) {
+        const r = document.createElementNS(svgNS, 'rect');
+        r.setAttribute('class', 'parallel');
+        r.setAttribute('x', colX(i) - 8); r.setAttribute('y', rowY(0) - 24);
+        r.setAttribute('width', W + 16); r.setAttribute('height', col.length * (H + GY) - GY + 32);
+        const t = document.createElementNS(svgNS, 'text');
+        t.setAttribute('x', colX(i)); t.setAttribute('y', rowY(0) - 9); t.textContent = 'em paralelo';
+        parts.push(r, t);
+      }
+      col.forEach((n, j) => {
+        keep.add(n.key);
+        let card = ui.rendered.get(n.key);
+        const sig = nodeSig(n);
+        if (!card) {
+          card = el('button', 'node');
+          card.dataset.key = n.key;
+          card.addEventListener('click', ev => { ev.stopPropagation(); selectNode(n.key); });
+          if (ui.knownKeys.size && !ui.knownKeys.has(n.key)) card.classList.add('fresh');
+          world.appendChild(card);
+          ui.rendered.set(n.key, card);
+        }
+        if (card.dataset.sig !== sig) {
+          card.dataset.sig = sig;
+          card.className = 'node kind-' + n.kind + (n.status === 'error' ? ' error' : '') + (card.classList.contains('fresh') ? ' fresh' : '');
+          card.replaceChildren(icon(n.icon, 'ic'), el('span', 'nt', n.title), el('span', 'ns', n.subtitle || ' '));
+          const st = el('span', 'st ' + n.status);
+          if (STATUS[n.status]) { st.append(icon(STATUS[n.status][0]), document.createTextNode(STATUS[n.status][1] + ' · ' + fmtTime(n.time))); }
+          else st.append(document.createTextNode(fmtTime(n.time)));
+          card.append(st);
+          card.title = n.title + (n.subtitle ? ': ' + n.subtitle : '');
+          card.setAttribute('aria-label', card.title + '. ' + (STATUS[n.status] ? STATUS[n.status][1] : ''));
+        }
+        card.style.left = colX(i) + 'px';
+        card.style.top = rowY(j) + 'px';
+        card.setAttribute('aria-pressed', String(n.key === selectedKey));
+      });
+      if (i > first) {
+        const prev = cols[i - 1];
+        for (let a = 0; a < prev.length; a++) for (let b = 0; b < col.length; b++) {
+          const x1 = colX(i - 1) + W, y1 = rowY(a) + H / 2, x2 = colX(i) - 3, y2 = rowY(b) + H / 2;
+          const path = document.createElementNS(svgNS, 'path');
+          const mid = (x1 + x2) / 2;
+          path.setAttribute('d', `M${x1} ${y1} C${mid} ${y1} ${mid} ${y2} ${x2} ${y2}`);
+          path.setAttribute('marker-end', 'url(#arrow)');
+          parts.push(path);
+        }
       }
     }
+    for (const [key, card] of ui.rendered) if (!keep.has(key)) { card.remove(); ui.rendered.delete(key); }
+    let earlier = world.querySelector('.earlier');
+    if (first > 0) {
+      if (!earlier) { earlier = button('btn earlier', '', null, () => { view(p.selectedTaskId).showAll = true; save(); render(); }); world.appendChild(earlier); }
+      earlier.textContent = 'Mostrar ' + first + ' etapa(s) anteriores';
+      earlier.style.left = (colX(first) - 200) + 'px';
+      earlier.style.top = (rowY(0) + H / 2 - 13) + 'px';
+    } else if (earlier) earlier.remove();
+    edges.setAttribute('width', colX(cols.length) + PAD);
+    edges.setAttribute('height', rowY(maxRows) + PAD);
+    edges.replaceChildren(...parts);
+    for (const n of nodes) ui.knownKeys.add(n.key);
+    ui.bounds = { x0: colX(first) - (first > 0 ? 210 : 0), x1: colX(cols.length - 1) + W, y0: rowY(0) - 30, y1: rowY(maxRows - 1) + H, lastX: colX(cols.length - 1) + W };
+    if (v.follow) followLatest(v);
+    applyView();
+  }
 
-    document.getElementById('newTaskBtn').addEventListener('click', () => {
-      vscode?.postMessage({ command: 'new-task' });
+  function applyView() {
+    const p = ui.payload; if (!p || !p.selectedTaskId) return;
+    const v = view(p.selectedTaskId);
+    $('world').style.transform = `translate(${v.x}px, ${v.y}px) scale(${v.k})`;
+  }
+  function followLatest(v) {
+    const vp = $('viewport').getBoundingClientRect();
+    if (!ui.bounds || !vp.width) return;
+    const right = ui.bounds.lastX * v.k + v.x;
+    if (right > vp.width - 40 || right < vp.width * .5) v.x = Math.min(PAD, vp.width - 60 - ui.bounds.lastX * v.k);
+    v.y = 0;
+  }
+  function fit() {
+    const p = ui.payload; if (!p || !p.selectedTaskId || !ui.bounds) return;
+    const v = view(p.selectedTaskId);
+    const vp = $('viewport').getBoundingClientRect();
+    const w = ui.bounds.x1 - ui.bounds.x0 + 2 * PAD, h = ui.bounds.y1 - ui.bounds.y0 + 2 * PAD;
+    v.k = Math.max(0.2, Math.min(1.25, Math.min(vp.width / w, vp.height / h)));
+    v.x = (vp.width - (ui.bounds.x1 + ui.bounds.x0) * v.k) / 2;
+    v.y = (vp.height - (ui.bounds.y1 + ui.bounds.y0) * v.k) / 2;
+    v.follow = false;
+    applyView(); save();
+  }
+  function zoomAt(factor, cx, cy) {
+    const p = ui.payload; if (!p || !p.selectedTaskId) return;
+    const v = view(p.selectedTaskId);
+    const k = Math.max(0.2, Math.min(2, v.k * factor));
+    v.x = cx - (cx - v.x) * (k / v.k);
+    v.y = cy - (cy - v.y) * (k / v.k);
+    v.k = k; v.follow = false;
+    applyView(); save();
+  }
+
+  const viewport = $('viewport');
+  // Focusing a card must not scroll the clipped viewport; pan/zoom is the only navigation.
+  viewport.addEventListener('scroll', () => { viewport.scrollLeft = 0; viewport.scrollTop = 0; });
+  let drag = null;
+  viewport.addEventListener('pointerdown', ev => {
+    if (ev.target.closest('.node, .btn') || !ui.payload || !ui.payload.selectedTaskId) return;
+    const v = view(ui.payload.selectedTaskId);
+    drag = { sx: ev.clientX, sy: ev.clientY, x: v.x, y: v.y, moved: false };
+    viewport.setPointerCapture(ev.pointerId);
+    viewport.classList.add('dragging');
+  });
+  viewport.addEventListener('pointermove', ev => {
+    if (!drag) return;
+    const v = view(ui.payload.selectedTaskId);
+    v.x = drag.x + ev.clientX - drag.sx; v.y = drag.y + ev.clientY - drag.sy;
+    if (Math.abs(ev.clientX - drag.sx) + Math.abs(ev.clientY - drag.sy) > 3) { drag.moved = true; v.follow = false; }
+    applyView();
+  });
+  viewport.addEventListener('pointerup', () => { if (drag) { drag = null; viewport.classList.remove('dragging'); save(); } });
+  viewport.addEventListener('wheel', ev => {
+    if (!ui.payload || !ui.payload.selectedTaskId) return;
+    ev.preventDefault();
+    const rect = viewport.getBoundingClientRect();
+    if (ev.ctrlKey) { zoomAt(ev.deltaY < 0 ? 1.1 : 1 / 1.1, ev.clientX - rect.left, ev.clientY - rect.top); return; }
+    const v = view(ui.payload.selectedTaskId);
+    const d = Math.abs(ev.deltaX) > Math.abs(ev.deltaY) ? ev.deltaX : ev.deltaY;
+    if (ev.shiftKey) v.y -= d; else v.x -= d;
+    v.follow = false;
+    applyView(); save();
+  }, { passive: false });
+  $('fit').addEventListener('click', fit);
+  $('zoomIn').addEventListener('click', () => { const r = viewport.getBoundingClientRect(); zoomAt(1.2, r.width / 2, r.height / 2); });
+  $('zoomOut').addEventListener('click', () => { const r = viewport.getBoundingClientRect(); zoomAt(1 / 1.2, r.width / 2, r.height / 2); });
+  $('latest').addEventListener('click', () => { if (!ui.payload || !ui.payload.selectedTaskId) return; const v = view(ui.payload.selectedTaskId); v.follow = true; followLatest(v); applyView(); save(); });
+  $('chooseSession').addEventListener('click', () => post({ command: 'chooseTranscript' }));
+  // When the dock opens, resizes or the window changes, keep the visible centre of the flow in place.
+  let lastViewport = null;
+  new ResizeObserver(() => {
+    const r = viewport.getBoundingClientRect();
+    const size = { w: r.width, h: r.height };
+    const p = ui.payload;
+    if (lastViewport && p && p.selectedTaskId) {
+      const v = view(p.selectedTaskId);
+      if (v.follow) followLatest(v);
+      else { v.x += (size.w - lastViewport.w) / 2; v.y += (size.h - lastViewport.h) / 2; }
+      applyView(); save();
+    }
+    lastViewport = size;
+  }).observe(viewport);
+
+  // ---------- selection and bottom details dock ----------
+  function selectNode(key) {
+    const p = ui.payload; if (!p || !p.selectedTaskId) return;
+    ui.selectedNode[p.selectedTaskId] = key;
+    save();
+    for (const [k, card] of ui.rendered) card.setAttribute('aria-pressed', String(k === key));
+    syncDock(true);
+  }
+  function closeDock() {
+    const p = ui.payload;
+    if (p && p.selectedTaskId) delete ui.selectedNode[p.selectedTaskId];
+    save();
+    for (const [, card] of ui.rendered) card.setAttribute('aria-pressed', 'false');
+    syncDock(false);
+  }
+  // Updates never close the dock or change the selected step; only the user does that.
+  function syncDock(force) {
+    const p = ui.payload;
+    const key = p && p.selectedTaskId ? ui.selectedNode[p.selectedTaskId] : null;
+    $('dock').hidden = !key;
+    if (!key) { ui.detailsKey = null; ui.detailsSig = ''; ui.detailsJson = ''; ui.details = null; $('dockBody').replaceChildren(); return; }
+    const node = (p.nodes || []).find(n => n.key === key);
+    const sig = node ? nodeSig(node) : '';
+    if (force || key !== ui.detailsKey || sig !== ui.detailsSig) {
+      ui.detailsSig = sig;
+      post({ command: 'details', key });
+    }
+    applyDock();
+    renderExplain();
+  }
+  function applyDock() {
+    const dock = $('dock');
+    const maxH = Math.max(160, Math.floor((document.querySelector('main.stage').clientHeight || 600) * 0.85));
+    ui.dock.h = Math.min(maxH, Math.max(140, ui.dock.h));
+    dock.style.height = ui.dock.collapsed ? '' : ui.dock.h + 'px';
+    dock.classList.toggle('collapsed', ui.dock.collapsed);
+    $('dockCollapse').setAttribute('aria-expanded', String(!ui.dock.collapsed));
+    $('dockCollapse').title = ui.dock.collapsed ? 'Expandir detalhes' : 'Recolher detalhes';
+    const grip = $('grip');
+    grip.setAttribute('aria-valuenow', String(Math.round(ui.dock.h)));
+  }
+  $('dockCollapse').addEventListener('click', () => { ui.dock.collapsed = !ui.dock.collapsed; applyDock(); save(); });
+  $('dockClose').addEventListener('click', closeDock);
+  {
+    let start = null;
+    const grip = $('grip');
+    grip.addEventListener('pointerdown', ev => {
+      if (ui.dock.collapsed) return;
+      start = { y: ev.clientY, h: ui.dock.h };
+      grip.setPointerCapture(ev.pointerId);
     });
-
-    document.getElementById('continueBtn').addEventListener('click', () => {
-      vscode?.postMessage({ command: 'continue-task' });
+    grip.addEventListener('pointermove', ev => {
+      if (!start) return;
+      ui.dock.h = start.h - (ev.clientY - start.y);
+      applyDock();
     });
-
-    document.getElementById('refreshBtn').addEventListener('click', () => {
-      vscode?.postMessage({ command: 'refresh' });
+    const end = () => { if (start) { start = null; save(); } };
+    grip.addEventListener('pointerup', end);
+    grip.addEventListener('pointercancel', end);
+    grip.addEventListener('keydown', ev => {
+      if (ev.key !== 'ArrowUp' && ev.key !== 'ArrowDown') return;
+      ev.preventDefault();
+      ui.dock.h += ev.key === 'ArrowUp' ? 24 : -24;
+      applyDock(); save();
     });
+  }
 
-    window.addEventListener('message', event => {
-      const message = event.data;
-      if (message.command === 'update-tasks') {
-        tasks = message.tasks;
-        selectedTaskId = message.currentTaskId;
-        selectedActionIndex = null;
-        renderUI();
-        updateInspector();
-      }
-    });
+  function requestDetails() { syncDock(false); }
 
-    if (vscode) {
-      vscode.postMessage({ command: 'init' });
+  function longText(text, asProse) {
+    const wrap = el('div');
+    const body = el(asProse ? 'p' : 'pre', asProse ? 'prose' : '');
+    if (text.length > LIMIT) {
+      body.textContent = text.slice(0, LIMIT);
+      const more = button('btn more', 'Mostrar tudo (' + text.length.toLocaleString('pt-BR') + ' caracteres)', null, () => { body.textContent = text; more.remove(); });
+      wrap.append(body, more);
+    } else {
+      body.textContent = text;
+      wrap.append(body);
     }
-  </script>
+    return wrap;
+  }
+  // One component for the three columns: a single main grouper that starts collapsed.
+  // Sem dados → texto simples, sem botão vazio.
+  // `lead` stays visible outside the grouper (short status only).
+  function columnBlock(title, key, id, summary, nodes, emptyText, lead = []) {
+    const s = el('section', 'block col');
+    s.append(el('h3', '', title), ...lead);
+    if (!nodes.length) { if (emptyText) s.append(el('p', 'note', emptyText)); return s; }
+    s.append(fold(key, id, false, [el('span', 'fold-title', summary)], nodes, 'col-group'));
+    return s;
+  }
+  function fileColumn(d, key) {
+    const nodes = [];
+    if (d.fileName) nodes.push(el('p', 'file-name', d.fileName));
+    if (d.filePath && d.filePath !== d.fileName) {
+      const copy = button('btn', 'Copiar caminho', null, () => post({ command: 'copy', text: d.filePath }), 'Copia o caminho completo');
+      nodes.push(el('code', 'path-text', d.filePath), copy);
+    }
+    return columnBlock('ARQUIVO', key, 'arquivo', 'Ver detalhes do arquivo', nodes, 'Não se aplica');
+  }
+  function entryColumn(d, key) {
+    const nodes = [];
+    if (d.what) nodes.push(el('p', 'item-label', 'Ação'), el('p', 'prose', d.what));
+    for (const item of d.entry) nodes.push(el('p', 'item-label', item.label), longText(item.text, !item.code));
+    return columnBlock('ENTRADA', key, 'entrada', 'Ver detalhes da entrada', nodes, 'Não se aplica');
+  }
+  function resultColumn(d, key) {
+    const r = d.result;
+    const title = 'SAÍDA / RESULTADO';
+    const summary = 'Ver detalhes do resultado';
+    if (r.kind === 'reply') {
+      return columnBlock(title, key, 'resultado', summary, [longText(r.text, true)], '', [el('p', 'res-label', r.label)]);
+    }
+    const nodes = [];
+    if (r.text) nodes.push(el('p', 'item-label', r.kind === 'error' ? 'Mensagem de erro' : 'Retorno registrado'), longText(r.text, false));
+    if (r.patch) nodes.push(el('p', 'item-label', 'Alteração registrada'), el('p', 'note', 'Registrada pelo Claude Code.'), longText(r.patch, false));
+    const lead = r.kind === 'text' || r.kind === 'pending' || r.kind === 'none' ? [] : [el('p', 'res-label' + (r.kind === 'error' ? ' err' : ''), r.label)];
+    const empty = r.kind === 'pending' ? 'Sem resultado registrado' : /^Não se aplica/.test(r.label) ? 'Não se aplica' : r.label;
+    return columnBlock(title, key, 'resultado', summary, nodes, empty, lead);
+  }
+  // Explanatory text lives in a tooltip: hover, keyboard focus, or click/tap on the info icon.
+  // Warnings and required actions are never placed in tooltips.
+  let tipSeq = 0;
+  // Clicking anywhere else closes an open tooltip so it never covers the controls below it.
+  document.addEventListener('click', ev => {
+    document.querySelectorAll('.tip.open').forEach(t => {
+      if (t.contains(ev.target)) return;
+      t.classList.remove('open');
+      t.querySelector('button.info').setAttribute('aria-expanded', 'false');
+    });
+  });
+  function infoTip(text, label) {
+    const id = 'tip-' + (++tipSeq);
+    const wrap = el('span', 'tip');
+    const btn = el('button', 'info');
+    btn.type = 'button';
+    btn.setAttribute('aria-label', 'Sobre ' + label);
+    btn.setAttribute('aria-describedby', id);
+    btn.setAttribute('aria-expanded', 'false');
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('class', 'info-ic');
+    svg.setAttribute('aria-hidden', 'true');
+    const use = document.createElementNS(SVG_NS, 'use');
+    use.setAttribute('href', '#i-info');
+    svg.appendChild(use);
+    btn.append(svg);
+    const bubble = el('span', 'tip-text', text);
+    bubble.id = id;
+    bubble.setAttribute('role', 'tooltip');
+    // preventDefault keeps the click from toggling the surrounding <summary>.
+    btn.addEventListener('click', ev => {
+      ev.preventDefault();
+      const open = !wrap.classList.contains('open');
+      wrap.classList.toggle('open', open);
+      btn.setAttribute('aria-expanded', String(open));
+    });
+    wrap.addEventListener('keydown', ev => {
+      if (ev.key !== 'Escape') return;
+      wrap.classList.remove('open');
+      btn.setAttribute('aria-expanded', 'false');
+    });
+    wrap.append(btn, bubble);
+    return wrap;
+  }
+  function commentBlock(c, key) {
+    const PREVIEW = 400;
+    const s = el('section', 'block comment wide');
+    const tipText = c.note || 'Mostra o texto público que o Claude escreveu na mesma mensagem desta ação. Não comprova o resultado.';
+    const title = el('span', 'fold-title', c.label);
+    if (!c.text) {
+      const head = el('div', 'fold-head');
+      head.append(brandIcon('logo-claude'), title, infoTip(tipText, c.label));
+      s.append(head, el('p', 'note', 'Sem comentário registrado para esta etapa'));
+      return s;
+    }
+    const children = [];
+    const quote = el('div', 'quote');
+    if (c.text.length > PREVIEW) {
+      quote.append(el('p', 'prose', c.text.slice(0, PREVIEW).trimEnd() + '…'));
+      const more = el('details', 'more-comment');
+      more.append(el('summary', '', 'Ver comentário completo'), longText(c.text, true));
+      children.push(quote, more);
+    } else {
+      quote.append(el('p', 'prose', c.text));
+      children.push(quote);
+    }
+    const line = el('span', 'fold-line');
+    line.append(title, infoTip(tipText, c.label));
+    s.append(fold(key, 'comentario', false, [brandIcon('logo-claude'), line], children, 'comment-fold'));
+    return s;
+  }
+  function splitExplanation(text) {
+    const idx = SECTIONS.map(t => text.indexOf(t));
+    if (idx.some(i => i < 0) || idx.some((v, i) => i > 0 && v <= idx[i - 1])) return null;
+    return SECTIONS.map((t, i) => [t, text.slice(idx[i] + t.length, i + 1 < SECTIONS.length ? idx[i + 1] : text.length).trim()]);
+  }
+
+  function renderDetails(d) {
+    const p = ui.payload;
+    const key = p && p.selectedTaskId ? ui.selectedNode[p.selectedTaskId] : null;
+    if (!d || !key || d.key !== key) return;
+    const json = JSON.stringify(d);
+    if (json === ui.detailsJson && ui.detailsKey === key) { renderExplain(); return; }
+    const sameStep = ui.detailsKey === key;
+    ui.detailsKey = key; ui.detailsJson = json; ui.details = d;
+    $('dockIcon').replaceChildren(icon(d.icon || 'tool'));
+    $('dockTitle').textContent = d.title;
+    $('dockTitle').title = d.title;
+    $('dockFile').textContent = d.fileName || '';
+    $('dockFile').hidden = !d.fileName;
+    const state = $('dockState');
+    state.textContent = d.state || '';
+    state.className = 'chip' + (d.status === 'error' ? ' err' : d.status === 'ok' ? ' on' : d.status === 'pending' ? ' warn' : '');
+    const body = $('dockBody');
+    const keepScroll = sameStep ? body.scrollTop : 0;
+    const items = [el('div', 'cols3')];
+    items[0].append(fileColumn(d, key), entryColumn(d, key), resultColumn(d, key));
+    if (d.comment) items.push(commentBlock(d.comment, key));
+    if (d.explainable !== false) items.push(aiBlock());
+    const tech = el('details', 'tech wide');
+    tech.open = openState(key, 'tecnico', false);
+    tech.addEventListener('toggle', () => setOpenState(key, 'tecnico', tech.open));
+    tech.append(el('summary', '', 'DETALHES TÉCNICOS'), el('pre', '', d.technical));
+    items.push(tech);
+    body.replaceChildren(...items);
+    body.scrollTop = keepScroll;
+    renderExplain();
+  }
+
+  // ---------- optional Gemini explanation (user-triggered, per selected step) ----------
+  function aiBlock() {
+    const s = el('section', 'block wide ai-block');
+    s.id = 'aiBox';
+    return s;
+  }
+  function renderExplain() {
+    const box = $('aiBox');
+    if (!box) return;
+    const key = ui.detailsKey;
+    const node = (ui.payload && ui.payload.nodes || []).find(n => n.key === key);
+    const sig = node ? nodeSig(node) : '';
+    const e = key ? ui.explain[key] : null;
+    const current = e && e.sig === sig ? e : null;
+    const stale = e && e.sig !== sig && e.status !== 'loading';
+    const explainable = ui.details && ui.details.explainable;
+    const busy = current && current.status === 'loading';
+    // Rebuild only when the content changes, so the user's open/closed choice is not disturbed on each poll.
+    const stateSig = JSON.stringify({ key, sig, current, stale, configured: ui.gemini.configured, explainable });
+    if (box.dataset.state === stateSig) return;
+    box.dataset.state = stateSig;
+    const content = [];
+    if (!ui.gemini.configured) content.push(el('p', 'note', 'Sem chave configurada, o painel funciona normalmente. Adicione sua chave em Configurações para habilitar esta explicação.'));
+    if (!explainable) content.push(el('p', 'note', 'Explicação disponível para ações: leituras, edições e comandos.'));
+    if (current) {
+      if (current.status === 'loading') {
+        const pending = el('p', 'prose', 'Gerando explicação…');
+        pending.setAttribute('role', 'status');
+        content.push(pending);
+      } else if (current.status === 'ready') {
+        const parts = splitExplanation(current.text);
+        if (parts) {
+          const grid = el('div', 'ai-grid');
+          for (const [title, text] of parts) {
+            const sec = el('div', 'ai-sec');
+            sec.append(el('h4', '', title), el('p', 'prose', text || 'Não informado nos dados.'));
+            grid.append(sec);
+          }
+          content.push(grid);
+        } else {
+          content.push(el('p', 'prose', current.text));
+        }
+      }
+      else if (current.status === 'error') content.push(el('p', 'prose', current.message || 'Não foi possível gerar a explicação.'));
+      else if (current.status === 'insufficient') content.push(el('p', 'prose', 'Ainda não há resultado registrado para esta ação. Tente de novo depois que ela terminar.'));
+      else if (current.status === 'unconfigured') content.push(el('p', 'prose', 'Nenhuma chave do Gemini está configurada.'));
+      else if (current.status === 'unsupported') content.push(el('p', 'prose', 'Esta etapa não tem dados para explicar.'));
+      else if (current.status === 'cancelled') content.push(el('p', 'prose', 'Envio cancelado. Nenhum dado foi enviado.'));
+    }
+    if (stale) content.push(el('p', 'note', 'A etapa mudou desde a última explicação. Peça uma nova se quiser atualizar.'));
+    const main = el('span', 'fold-main');
+    const line = el('span', 'fold-line');
+    line.append(el('span', 'fold-title', 'EXPLICAÇÃO COM GEMINI'), infoTip('Gerada por IA a partir do comentário do Claude e dos dados registrados. Não é o comentário original. Só é gerada quando você pede, com sua chave pessoal.', 'Explicação com Gemini'));
+    main.append(line);
+    if (current && current.status === 'ready') main.append(el('span', 'sub-id on', 'Gerada por IA'));
+    const section = fold(key, 'ia', true, [brandIcon('logo-gemini'), main], content, 'ai-fold');
+    const label = current && current.status === 'ready' ? 'Atualizar explicação' : 'Explicar esta etapa';
+    const actions = el('div', 'ai-actions');
+    actions.append(button('btn primary', busy ? 'Gerando…' : label, 'spark', () => requestExplain(key, sig), 'Envia somente os dados desta etapa ao Gemini'));
+    actions.lastChild.disabled = !explainable || busy || !key;
+    if (current && (current.status === 'error')) actions.lastChild.textContent = 'Tentar novamente';
+    box.replaceChildren(section, actions);
+  }
+  function requestExplain(key, sig) {
+    ui.explain[key] = { sig, status: 'loading' };
+    setOpenState(key, 'ia', true);
+    renderExplain();
+    $('aiBox').scrollIntoView({ block: 'nearest' });
+    post({ command: 'explain', key, sig });
+  }
+
+  // ---------- main ----------
+  function render() {
+    const p = ui.payload; if (!p) return;
+    renderHeader(p); renderTasks(p); renderBanners(p); renderCanvas(p);
+    $('summary').textContent = p.selectedTaskId ? p.summary : '';
+    requestDetails();
+  }
+  window.addEventListener('message', event => {
+    const m = event.data;
+    if (!m || typeof m !== 'object') return;
+    if (m.command === 'payload' && m.payload) {
+      const previousTask = ui.payload && ui.payload.selectedTaskId;
+      ui.payload = m.payload;
+      if (previousTask !== m.payload.selectedTaskId) {
+        for (const [, card] of ui.rendered) card.remove();
+        ui.rendered.clear(); ui.knownKeys = new Set();
+        ui.detailsSig = '';
+      }
+      render();
+    } else if (m.command === 'details') {
+      renderDetails(m.details);
+    } else if (m.command === 'gemini') {
+      ui.gemini = { configured: !!m.configured };
+      renderGeminiStatus();
+      renderExplain();
+    } else if (m.command === 'explanation' && typeof m.key === 'string') {
+      ui.explain[m.key] = { sig: m.sig, status: m.status, text: m.text, message: m.message };
+      if (m.key === ui.detailsKey) renderExplain();
+    }
+  });
+  // The task list can be collapsed; the preference survives updates and reloads. Selection is untouched.
+  function applyTasksPane() {
+    const hidden = ui.tasksHidden;
+    document.querySelector('.body').classList.toggle('no-tasks', hidden);
+    $('taskPane').hidden = hidden;
+    const toggle = $('tasksToggle');
+    toggle.setAttribute('aria-expanded', String(!hidden));
+    $('tasksToggleLabel').textContent = hidden ? 'Mostrar tarefas' : 'Ocultar tarefas';
+  }
+  $('tasksToggle').addEventListener('click', () => {
+    ui.tasksHidden = !ui.tasksHidden;
+    applyTasksPane();
+    save();
+  });
+  applyTasksPane();
+  post({ command: 'ready' });
+  window.__painel = { ui, fit };
+})();
+</script>
 </body>
 </html>

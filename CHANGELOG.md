@@ -1,5 +1,42 @@
 # 📝 Changelog
 
+## [0.8.3] — 2026-11-09
+
+### Corrigido
+- Ícone de informação do Gemini alinhado ao canto superior direito, como o comentário do Claude.
+
+### Publicação
+- Apresentação visual, instalação sem terminal e guias de uso/desenvolvimento atualizados.
+- Repositório apresentado como Claude Task Viewer; identidade interna da extensão preservada.
+
+## [0.8.2] — 2026-11-09
+
+- Lista de tarefas recolhível, colunas compactas e legendas em tooltips acessíveis.
+- Comentário do Claude com identificação laranja e explicação Gemini com identificação azul.
+- Abertura de seções preservada por etapa e nenhuma chamada à API ao expandir detalhes.
+
+## [0.8.0–0.8.1] — 2026-11-09
+
+- Arquivo, entrada e resultado em colunas com seções recolhíveis.
+- Comentário público associado à mensagem da ação ou à rodada, sem blocos de raciocínio interno.
+- Comentário incluído no contexto sanitizado da explicação Gemini.
+
+## [0.7.0] — 2026-11-09
+
+- Detalhes em painel inferior redimensionável.
+- Gemini opcional por etapa, com chave pessoal no SecretStorage e envio explícito.
+
+## [0.6.0] — 2026-11-09
+
+- Leitura incremental direta das transcrições locais do Claude.
+- Fluxo horizontal em HTML/CSS/JavaScript com conectores SVG.
+- Tarefas com controle explícito de criação/continuação e histórico legado.
+- Distribuição por VSIX pronto, sem build de React para o usuário.
+
+---
+
+As entradas abaixo descrevem versões antigas e podem mencionar arquitetura já substituída.
+
 ## [0.3.1] — 2026-11-08
 
 - Corrige seleção que voltava para a primeira execução durante atualização.

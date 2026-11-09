@@ -1,3 +1,5 @@
+> Registro histórico de versões anteriores. Para a instalação e arquitetura atuais, consulte o [README](README.md) e o [guia de uso](docs/como-usar.md).
+
 # 🎉 Release Notes
 
 ## [0.2.2] — 2026-11-08 (Histórico + Labels)

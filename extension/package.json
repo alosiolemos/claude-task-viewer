@@ -1,17 +1,17 @@
 {
   "name": "painel-execucao",
-  "displayName": "Painel Execução",
-  "description": "Acompanhe e audite execução de tarefas do Claude Code em tempo real",
-  "version": "0.3.1",
+  "displayName": "Visualização Modular de Execução das Tarefas do Claude",
+  "description": "Acompanhe em cartões conectados o que o Claude Code faz em cada tarefa, lendo as transcrições locais. Inspirado em visualizações de workflow como as do n8n; sem vínculo com o n8n.",
+  "version": "0.8.3",
   "publisher": "aloisiolemos",
   "author": "Aloisio Lemos",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/alosiolemos/painel-execucao"
+    "url": "https://github.com/alosiolemos/claude-task-viewer"
   },
   "type": "module",
-  "main": "dist/extension.js",
+  "main": "dist/extension.cjs",
   "engines": {
     "vscode": "^1.85.0",
     "node": ">=18.0.0"
@@ -21,47 +21,52 @@
   ],
   "keywords": [
     "claude-code",
-    "execution",
-    "tracking",
-    "audit",
+    "execução",
+    "auditoria",
     "workflow",
-    "n8n"
+    "transcrição",
+    "visualização"
   ],
   "activationEvents": [
-    "onStartupFinished",
-    "onCommand:painel-execucao.open"
+    "onCommand:painel-execucao.open",
+    "onCommand:painel-execucao.chooseTranscript"
   ],
   "contributes": {
     "commands": [
       {
         "command": "painel-execucao.open",
-        "title": "Abrir Painel Execução",
-        "category": "Painel Execução"
+        "title": "Abrir Visualização de Execução do Claude",
+        "category": "Visualização de Execução"
+      },
+      {
+        "command": "painel-execucao.chooseTranscript",
+        "title": "Escolher sessão do Claude",
+        "category": "Visualização de Execução"
       }
     ],
     "configuration": [
       {
-        "title": "Painel Execução",
+        "title": "Visualização de Execução do Claude",
         "properties": {
-          "painel-execucao.autoRefresh": {
-            "type": "boolean",
-            "default": true,
-            "description": "Atualizar painel automaticamente a cada novo evento"
+          "painel-execucao.transcriptsDir": {
+            "type": "string",
+            "default": "",
+            "description": "Pasta com as transcrições (.jsonl) do Claude Code para este projeto. Vazio = detectar em ~/.claude/projects (ou CLAUDE_CONFIG_DIR)."
           },
           "painel-execucao.refreshInterval": {
             "type": "number",
-            "default": 2000,
-            "description": "Intervalo de atualização em milissegundos"
+            "default": 1500,
+            "minimum": 500,
+            "description": "Intervalo, em milissegundos, para verificar novas linhas na transcrição."
           }
         }
       }
     ]
   },
   "scripts": {
-    "build": "esbuild src/extension.ts --bundle --external:vscode --platform=node --format=esm --outfile=dist/extension.js",
-    "watch": "npm run build -- --watch",
-    "compile": "npm run build",
-    "publish": "vsce publish"
+    "vscode:prepublish": "node ../scripts/build.mjs",
+    "build": "node ../scripts/build.mjs",
+    "package": "node ../scripts/package.mjs"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

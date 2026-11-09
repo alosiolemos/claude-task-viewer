@@ -1,6 +1,6 @@
 **
-!dist/extension.js
-!webview/**
+!dist/extension.cjs
+!webview/painel.html
 !resources/**
 !package.json
 !README.md

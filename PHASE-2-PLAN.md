@@ -1,3 +1,5 @@
+> Registro histórico de versões anteriores. Para a instalação e arquitetura atuais, consulte o [README](README.md) e o [guia de uso](docs/como-usar.md).
+
 # Phase 2: Workflow Visual Horizontal
 
 ## Estrutura de Dados

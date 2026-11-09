@@ -1,3 +1,5 @@
+> Registro histórico de versões anteriores. Para a instalação e arquitetura atuais, consulte o [README](README.md) e o [guia de uso](docs/como-usar.md).
+
 # Publicar no GitHub
 
 O código está pronto. Escolha um método para publicar:

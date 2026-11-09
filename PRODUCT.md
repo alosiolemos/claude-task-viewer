@@ -1,76 +1,39 @@
-# Painel Execução — Produto
+# Claude Task Viewer — produto atual
 
-**Visão:** Painel local em VS Code para acompanhar, auditar e comparar a execução de trabalhos do Claude Code (e futuramente Codex), mostrando etapas planejadas vs reais com entrada/saída de cada nó.
+## Objetivo
 
-## Modo
+Ajudar quem não programa a entender o que o Claude Code está fazendo: qual arquivo leu, o que editou, qual resultado foi registrado e o que ele explicou publicamente.
 
-**Operate** — o visitante (usuário auditor) completa uma tarefa de auditoria e comparação. Scanabilidade, consistência com VS Code, e clareza sobre estado/evidências superam expressão. A interface recede; os dados falam.
+Este é um visualizador local no VS Code. Não é executor de workflows, orquestrador, editor de arquivos ou certificador de auditoria. A referência visual de fluxos como os do n8n é apenas inspiração, sem vínculo oficial.
 
-## Necessidades principais
+## Experiência principal
 
-1. **Acompanhamento visual modular** — semelhante ao n8n, mostrando:
-   - Etapas planejadas (grafo do fluxo esperado)
-   - Ações reais capturadas automaticamente
-   - Entrada/saída de cada nó
-   - Estados: planejado, executando, concluído, falhou, cancelado, sem evidência
+1. Abrir a pasta e escolher a sessão do Claude.
+2. Criar uma tarefa ou continuar a tarefa atual explicitamente.
+3. Ver cartões conectados pela ordem observada.
+4. Clicar numa ação e abrir os detalhes abaixo do fluxo.
+5. Expandir Arquivo, Entrada e Saída / Resultado conforme necessário.
+6. Consultar o comentário original e, opcionalmente, pedir uma explicação ao Gemini.
 
-2. **Captura automática** — sem arrastar arquivos, integração com eventos do Claude Code em projeto específico, com controle ligar/desligar visível.
+A linguagem deve ser simples. Não presumir conhecimento de JavaScript, Git, JSON ou ferramentas de terminal. Identificadores técnicos e caminhos completos ficam em detalhes secundários.
 
-3. **Inspetor lateral** — ao clicar em uma etapa/ação, mostra:
-   - Projeto, sessão, execução, etapa, ID
-   - Entrada e parâmetros
-   - Ação, ferramenta, arquivos envolvidos
-   - Saída, erros, código de retorno
-   - Horário e duração
-   - Validação e evidência
-   - Relação pai-filho, tentativas
+## Implementação de referência
 
-4. **Comparação e auditoria** — permite comparar execuções anteriores vs atuais, marcar divergências, gerar pedido de correção copiável.
+- Transcrições locais do Claude Code, somente leitura e leitura incremental.
+- HTML/CSS/JavaScript e SVG na Webview; sem frontend React em produção.
+- Identificação por sessão e associações persistidas de tarefas. Pastas não definem a tarefa.
+- Uma aba reutilizável, seleção e navegação preservadas durante atualizações.
+- Comentários somente a partir de texto público; não exibir raciocínio interno.
+- Gemini opcional por etapa, com chave pessoal no SecretStorage, sanitização e envio explícito.
+- Instalação por VSIX pronto, sem pedir npm ou compilação ao usuário.
 
-5. **IA opcional (Gemini)** — botão "Explicar esta etapa", apenas para resumir erros e sugerir hipóteses, nunca fonte de verdade.
+## Fora da versão 0.8.3
 
-## Público
+- Explicação com Gemini da tarefa inteira: ideia futura, com limites e revisão do envio.
+- Exportação para auditoria: ideia futura.
+- Comparador de execuções, plano vs. realizado, suporte completo a subagentes e Codex.
+- Mudanças automáticas de tarefa baseadas em interpretação semântica.
 
-- Usuário desenvoltor/auditor em português do Brasil
-- Dentro do VS Code (Webview)
-- Focado em clareza, auditoria sem distrações, sem experimentação
+## Critérios para evoluir
 
-## Requisitos técnicos
-
-- **Stack:** JavaScript/TypeScript, Node.js local, React, VS Code Extension API
-- **Interface:** Webview React com React Flow para nós (após validar licença)
-- **Armazenamento:** Fora da pasta versionada, isolado por projeto, com limites de tamanho e retenção
-- **Segurança:** Captura desativada por padrão, redação de segredos antes de gravar, sem monitoramento de desktop, Webview com CSP restrita
-
-## Captura e eventos
-
-- Inicialmente: eventos do Claude Code apenas
-- Preparar adaptadores para Codex (não declarar pronto sem testar)
-- Confirmar antes da implementação: quais eventos realmente estão disponíveis na API de extensões VS Code
-
-## Gemini (opcional, desativado)
-
-- Camada de explicação apenas, nunca transformação de dados
-- Arquivo `.env.local` para chave real (ignorado pelo git, `.env.example` sem chave)
-- `GEMINI_ENABLED=false` por padrão
-- Sem fallback pago, sem upgrade automático
-- Anonimização de dados sensíveis antes de enviar
-- Mostrar carga exata e pedir confirmação na primeira ativação
-
-## Repositório público
-
-- Nome: `painel-execucao`
-- GitHub user: `alosiolemos`
-- Somente código e demonstrações sintéticas
-- `.gitignore` exclui `.env*`, `node_modules`, `build`, `logs`, dados locais
-- README com instalação, uso, privacidade, limitações, desinstalação
-- Revisão de segredos antes do push
-
-## Entregas
-
-1. Estrutura mínima + Webview com eventos de demonstração (claramente identificados)
-2. Captura de evento real do Claude Code, persistência e atualização
-3. Grafo de etapas, inspetor, estados de falha
-4. Comparação entre execuções e pedido de correção copiável
-5. Gemini opcional, com testes de sanitização
-6. Documentação, segurança, preparação para repositório público
+Preservar simplicidade e o layout aprovado. Dados desconhecidos devem ser sinalizados. Erro de uma ação não prova falha da tarefa inteira; resposta final não prova sucesso. Não reintroduzir infraestrutura desnecessária. Referências atuais: README.md, docs/como-usar.md e docs/desenvolvimento.md.

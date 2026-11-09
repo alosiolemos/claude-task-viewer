@@ -1,3 +1,5 @@
+> Registro histórico de versões anteriores. Para a instalação e arquitetura atuais, consulte o [README](README.md) e o [guia de uso](docs/como-usar.md).
+
 # Publicação no GitHub — Painel Execução
 
 ## Status Atual
